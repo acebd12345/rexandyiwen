@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title id="pg-title">Rex Chang</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,600;1,700&family=Syne:wght@400;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --paper:   #f0ece3;
+      --ink:     #0d0c09;
+      --ink2:    #121110;
+      --red:     #c93820;
+      --warm:    #8a8478;
+      --rule:    rgba(13,12,9,.12);
+      --rule-inv:rgba(240,236,227,.1);
+      --serif:   'Cormorant Garamond',Georgia,serif;
+      --sans:    'Syne',system-ui,sans-serif;
+      --mono:    'Fira Code',monospace;
+      --pad:     clamp(1.6rem,6vw,6rem);
+      --nav-h:   64px;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html{scroll-behavior:smooth;}
+    body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-weight:400;overflow-x:hidden;cursor:none;}
+    img{display:block;max-width:100%;}
+    a{color:inherit;text-decoration:none;}
+    button{cursor:none;border:none;background:none;font:inherit;}
+
+    /* Grain */
+    body::before{content:'';position:fixed;inset:0;z-index:9998;pointer-events:none;
+      background:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='.045'/%3E%3C/svg%3E");opacity:.65;}
+
+    /* Progress */
+    #prog{position:fixed;top:0;left:0;right:0;height:2px;z-index:1100;}
+    #prog-bar{height:100%;width:0%;background:var(--red);transition:width .08s linear;}
+
+    /* Cursor crosshair */
+    #cur{position:fixed;top:0;left:0;z-index:9999;pointer-events:none;transition:opacity .3s;}
+    #cur .ch,#cur .cv{position:absolute;background:var(--ink);transform:translate(-50%,-50%);}
+    #cur .ch{width:18px;height:1px;}
+    #cur .cv{width:1px;height:18px;}
+    #cur .cd{position:absolute;width:4px;height:4px;border-radius:50%;background:var(--red);transform:translate(-50%,-50%);transition:transform .2s;}
+    body.inv #cur .ch,body.inv #cur .cv{background:var(--paper);}
+    body.hover #cur .cd{transform:translate(-50%,-50%) scale(2.5);}
+
+    /* Nav */
+    #nav{position:fixed;top:0;left:0;right:0;z-index:1000;height:var(--nav-h);
+      display:flex;align-items:center;justify-content:space-between;
+      padding:0 var(--pad);transition:background .4s,border-color .4s;
+      border-bottom:1px solid transparent;}
+    #nav.on{background:rgba(240,236,227,.92);backdrop-filter:blur(20px);border-color:var(--rule);}
+    .nlogo{font-family:var(--serif);font-size:1.25rem;font-weight:700;letter-spacing:-.01em;}
+    .nlogo em{color:var(--red);font-style:italic;}
+    .nlinks{display:flex;gap:2.2rem;list-style:none;}
+    .nlinks a{font-family:var(--sans);font-size:.72rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+      color:var(--warm);position:relative;padding-bottom:2px;transition:color .2s;}
+    .nlinks a::after{content:'';position:absolute;bottom:0;left:0;width:0;height:1px;background:var(--red);transition:width .3s ease;}
+    .nlinks a:hover{color:var(--ink);}
+    .nlinks a:hover::after{width:100%;}
+    .ncta{font-family:var(--sans);font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+      color:var(--paper);background:var(--ink);padding:.5rem 1.25rem;border-radius:2px;transition:background .2s;}
+    .ncta:hover{background:var(--red);}
+
+    /* Hamburger */
+    .hbg{display:none;flex-direction:column;justify-content:center;gap:5px;
+      width:36px;height:36px;padding:4px;cursor:none;}
+    .hbg span{width:22px;height:1.5px;background:var(--ink);display:block;
+      transition:transform .35s cubic-bezier(.77,0,.175,1),opacity .25s;transform-origin:center;}
+    .hbg.open span:nth-child(1){transform:translateY(6.5px) rotate(45deg);}
+    .hbg.open span:nth-child(2){opacity:0;transform:scaleX(0);}
+    .hbg.open span:nth-child(3){transform:translateY(-6.5px) rotate(-45deg);}
+
+    /* Mobile menu */
+    #mob{position:fixed;inset:0;z-index:799;background:var(--paper);
+      display:flex;flex-direction:column;justify-content:center;padding:var(--pad);
+      transform:translateX(100%);transition:transform .5s cubic-bezier(.77,0,.175,1);}
+    #mob.open{transform:translateX(0);}
+    .mob-links{list-style:none;display:flex;flex-direction:column;gap:.1rem;}
+    .mob-links a{font-family:var(--serif);font-size:clamp(2.6rem,10vw,5.5rem);font-weight:700;
+      color:var(--ink);line-height:1.05;letter-spacing:-.04em;display:block;
+      transition:color .2s,transform .2s;padding:.1rem 0;}
+    .mob-links a:hover{color:var(--red);transform:translateX(8px);}
+    .mob-cta-wrap{margin-top:2.5rem;display:flex;align-items:center;gap:1rem;}
+    .mob-cta{font-family:var(--sans);font-size:.78rem;font-weight:800;
+      letter-spacing:.12em;text-transform:uppercase;color:var(--paper);
+      background:var(--red);padding:.6rem 1.4rem;border-radius:2px;}
+    .mob-social{display:flex;gap:1.2rem;}
+    .mob-social a{font-family:var(--mono);font-size:.68rem;color:var(--warm);letter-spacing:.04em;transition:color .2s;}
+    .mob-social a:hover{color:var(--ink);}
+    .mob-foot{position:absolute;bottom:2.5rem;left:var(--pad);right:var(--pad);
+      display:flex;justify-content:space-between;align-items:center;
+      border-top:1px solid var(--rule);padding-top:1.2rem;}
+    .mob-foot-name{font-family:var(--serif);font-style:italic;font-size:.95rem;color:var(--warm);}
+    .mob-foot-loc{font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--warm);}
+
+    /* ─── VIEW SWITCHING ─── */
+    .view{display:none;}
+    .view.active{display:block;}
+
+    /* ─── BACK BUTTON ─── */
+    .back-btn{display:inline-flex;align-items:center;gap:.6rem;
+      font-family:var(--sans);font-size:.68rem;font-weight:700;
+      letter-spacing:.12em;text-transform:uppercase;color:var(--warm);
+      transition:color .2s;padding:2.5rem var(--pad) 0;cursor:none;}
+    .back-btn::before{content:'←';}
+    .back-btn:hover{color:var(--ink);}
+    .back-btn.inv{color:rgba(240,236,227,.4);padding:2.5rem var(--pad) 0;}
+    .back-btn.inv:hover{color:var(--paper);}
+
+    /* ─── ARTICLE DETAIL ─── */
+    #view-article{background:var(--paper);min-height:100vh;padding-top:var(--nav-h);}
+    .art-hero{padding:3rem var(--pad) 4rem;border-bottom:1px solid var(--rule);}
+    .art-meta{display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap;
+      font-family:var(--mono);font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;
+      color:var(--warm);margin-bottom:2rem;}
+    .art-meta .amc{color:var(--red);}
+    .art-title{font-family:var(--serif);font-size:clamp(2.2rem,5vw,5rem);
+      font-weight:700;line-height:.95;letter-spacing:-.03em;max-width:20ch;}
+    .art-scroll{display:grid;grid-template-columns:1fr min(68ch,100%) 1fr;}
+    .art-body{grid-column:2;padding:4rem 0 6rem;}
+    .art-body h2{font-family:var(--serif);font-size:clamp(1.5rem,2.5vw,2.1rem);
+      font-weight:700;line-height:1.1;letter-spacing:-.02em;margin:3.5rem 0 1.2rem;
+      padding-top:3.5rem;border-top:1px solid var(--rule);}
+    .art-body h2:first-child{margin-top:0;padding-top:0;border-top:none;}
+    .art-body p{font-size:1.06rem;line-height:1.95;color:rgba(13,12,9,.72);margin-bottom:1.4rem;}
+    .art-body strong{color:var(--ink);font-weight:600;}
+    .art-body pre{background:var(--ink);color:#e2e8f0;font-family:var(--mono);
+      font-size:.8rem;line-height:1.75;padding:1.5rem 2rem;border-radius:5px;
+      overflow-x:auto;margin:2rem 0;}
+    .art-body code{font-family:var(--mono);font-size:.85em;
+      background:rgba(13,12,9,.07);padding:.15em .4em;border-radius:3px;}
+    .art-body pre code{background:none;padding:0;font-size:inherit;}
+    .art-body .callout{border-left:2px solid var(--red);
+      background:rgba(201,56,32,.04);padding:1.2rem 1.6rem;margin:2.5rem 0;
+      font-family:var(--serif);font-style:italic;font-size:1.1rem;
+      color:var(--ink);line-height:1.6;}
+    .art-body ul{padding-left:1.5rem;margin-bottom:1.4rem;}
+    .art-body li{font-size:1.02rem;line-height:1.9;color:rgba(13,12,9,.72);margin-bottom:.4rem;}
+    .art-nav{display:flex;justify-content:space-between;align-items:center;
+      padding:3rem var(--pad);border-top:1px solid var(--rule);
+      background:rgba(13,12,9,.02);}
+    .art-nav-btn{font-family:var(--sans);font-size:.68rem;font-weight:700;
+      letter-spacing:.1em;text-transform:uppercase;color:var(--warm);
+      display:flex;flex-direction:column;gap:.4rem;transition:color .2s;cursor:none;}
+    .art-nav-btn:hover{color:var(--ink);}
+    .art-nav-btn .ant{font-family:var(--serif);font-size:1.1rem;font-style:italic;
+      font-weight:700;color:var(--ink);letter-spacing:-.01em;line-height:1.2;}
+    .art-nav-btn.next{align-items:flex-end;}
+
+    /* ─── NOTES LIST PAGE ─── */
+    #view-notes{background:var(--paper);min-height:100vh;padding-top:var(--nav-h);}
+    .nlist-hero{padding:4rem var(--pad) 3rem;border-bottom:1px solid var(--rule);}
+    .nlist-title{font-family:var(--serif);font-size:clamp(3rem,6vw,7rem);
+      font-weight:700;line-height:.9;letter-spacing:-.04em;margin-top:.8rem;}
+    .nlist-title em{font-style:italic;color:var(--red);}
+    .nlist-body{padding:0 var(--pad);}
+    .nlist-row{display:grid;grid-template-columns:60px 1fr auto;gap:2rem;align-items:start;
+      padding:2.5rem 0;border-bottom:1px solid var(--rule);
+      transition:background .25s;cursor:none;}
+    .nlist-row:hover{background:rgba(13,12,9,.025);
+      margin:0 calc(-1*var(--pad));padding-left:var(--pad);padding-right:var(--pad);}
+    .nlist-idx{font-family:var(--mono);font-size:.68rem;color:var(--warm);padding-top:.25rem;}
+    .nlist-info{display:flex;flex-direction:column;gap:.55rem;}
+    .nlist-cat{font-family:var(--sans);font-size:.63rem;font-weight:700;
+      letter-spacing:.14em;text-transform:uppercase;}
+    .nlist-cat.cl{color:var(--red);}
+    .nlist-cat.ai{color:#7c6bb5;}
+    .nlist-cat.sc{color:#a04040;}
+    .nlist-t{font-family:var(--serif);font-size:1.5rem;font-weight:700;line-height:1.2;}
+    .nlist-exc{font-size:.88rem;line-height:1.8;color:rgba(13,12,9,.55);max-width:58ch;}
+    .nlist-right{display:flex;flex-direction:column;align-items:flex-end;gap:.8rem;}
+    .nlist-date{font-family:var(--mono);font-size:.63rem;color:var(--warm);white-space:nowrap;}
+    .nlist-read{font-family:var(--sans);font-size:.66rem;font-weight:700;letter-spacing:.1em;
+      text-transform:uppercase;color:var(--ink);display:flex;align-items:center;gap:.3rem;
+      transition:color .2s,gap .2s;white-space:nowrap;}
+    .nlist-read:hover{color:var(--red);gap:.55rem;}
+    .nlist-read::after{content:'→';}
+
+    /* ─── GALLERY DETAIL ─── */
+    #view-photo{background:var(--ink2);color:var(--paper);min-height:100vh;padding-top:var(--nav-h);}
+    .photo-wrap{width:100%;background:rgba(0,0,0,.35);display:flex;
+      align-items:center;justify-content:center;overflow:hidden;max-height:72vh;}
+    .photo-wrap img{max-width:100%;max-height:72vh;object-fit:contain;display:block;}
+    .photo-info{display:grid;grid-template-columns:1.1fr 1fr;gap:5rem;
+      padding:3rem var(--pad) 5rem;align-items:start;}
+    .pi-left{}
+    .pi-title{font-family:var(--serif);font-size:clamp(2rem,4vw,4rem);
+      font-weight:700;line-height:.95;letter-spacing:-.03em;}
+    .pi-title-zh{font-family:var(--serif);font-style:italic;font-size:1.1rem;
+      color:rgba(240,236,227,.38);margin-top:.4rem;}
+    .pi-cat{font-family:var(--sans);font-size:.63rem;font-weight:700;letter-spacing:.14em;
+      text-transform:uppercase;color:#e8a090;margin-top:1.2rem;}
+    .pi-loc{font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;
+      text-transform:uppercase;color:rgba(240,236,227,.3);margin-top:.6rem;
+      display:flex;align-items:center;gap:.5rem;}
+    .pi-desc{font-size:.95rem;line-height:1.9;color:rgba(240,236,227,.52);
+      margin-top:1.8rem;max-width:44ch;}
+    .pi-right{}
+    .exif-label{font-family:var(--sans);font-size:.63rem;font-weight:700;
+      letter-spacing:.14em;text-transform:uppercase;color:rgba(240,236,227,.3);
+      margin-bottom:1.2rem;}
+    .exif-grid{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;}
+    .exif-item{padding:.9rem;border:1px solid rgba(240,236,227,.07);
+      border-radius:4px;background:rgba(240,236,227,.025);}
+    .exif-k{font-family:var(--mono);font-size:.58rem;letter-spacing:.12em;
+      text-transform:uppercase;color:rgba(240,236,227,.28);margin-bottom:.3rem;}
+    .exif-v{font-family:var(--mono);font-size:.8rem;color:var(--paper);}
+    .photo-nav-row{display:flex;gap:1rem;padding:2.5rem var(--pad);
+      border-top:1px solid rgba(240,236,227,.07);}
+    .photo-nav-btn{flex:1;padding:.85rem;text-align:center;font-family:var(--sans);
+      font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+      border:1px solid rgba(240,236,227,.12);border-radius:3px;color:rgba(240,236,227,.45);
+      transition:all .2s;cursor:none;}
+    .photo-nav-btn:hover{border-color:rgba(240,236,227,.35);color:var(--paper);}
+    .photo-nav-btn:disabled{opacity:.2;pointer-events:none;}
+
+    /* ─── HERO ─── */
+    #hero{min-height:100vh;background:var(--paper);display:flex;flex-direction:column;
+      justify-content:flex-end;padding:calc(var(--nav-h) + 2rem) var(--pad) 3.5rem;
+      position:relative;overflow:hidden;}
+    .h-marker{position:absolute;top:calc(var(--nav-h) + 2rem);left:var(--pad);
+      display:flex;align-items:center;gap:1.2rem;font-family:var(--sans);font-size:.64rem;
+      font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--warm);
+      opacity:0;animation:fu .7s ease .3s forwards;}
+    .h-first{font-family:var(--serif);font-style:italic;font-weight:400;
+      font-size:clamp(3.5rem,7vw,8rem);line-height:.9;color:var(--warm);letter-spacing:-.02em;
+      opacity:0;animation:fu .8s ease .5s forwards;}
+    .h-rule{height:1px;background:var(--ink);margin:.6rem 0;
+      transform:scaleX(0);transform-origin:left;animation:rIn .9s ease .7s forwards;}
+    .h-last{font-family:var(--serif);font-weight:700;
+      font-size:clamp(5rem,18vw,21rem);line-height:.82;letter-spacing:-.04em;white-space:nowrap;
+      opacity:0;animation:fu .9s ease .75s forwards;}
+    .h-reddot{position:absolute;right:var(--pad);width:10px;height:10px;
+      background:var(--red);opacity:0;animation:fi .5s ease 1.4s forwards;}
+    .h-sub{display:flex;align-items:center;gap:1.2rem;flex-wrap:wrap;margin-top:1.4rem;
+      font-family:var(--sans);font-size:.8rem;font-weight:600;letter-spacing:.12em;
+      text-transform:uppercase;color:var(--warm);opacity:0;animation:fu .7s ease 1s forwards;}
+    .h-sep{color:var(--red);}
+    .h-slogan{position:absolute;bottom:3.5rem;right:var(--pad);text-align:right;
+      font-family:var(--serif);font-style:italic;font-size:clamp(.9rem,1.2vw,1.15rem);
+      color:var(--warm);line-height:1.5;opacity:0;animation:fi .8s ease 1.3s forwards;}
+    .h-scroll{position:absolute;bottom:3rem;left:var(--pad);display:flex;align-items:center;gap:.8rem;
+      font-family:var(--sans);font-size:.6rem;font-weight:700;letter-spacing:.18em;
+      text-transform:uppercase;color:var(--warm);opacity:0;animation:fi .7s ease 1.5s forwards;}
+    .h-scroll-line{width:36px;height:1px;background:var(--warm);animation:sP 2s ease-in-out infinite;}
+
+    /* ─── SECTION BASICS ─── */
+    .sec{position:relative;z-index:1;}
+    .sec.dark{background:var(--ink2);color:var(--paper);}
+    .sec-inner{padding:7rem var(--pad);}
+    .slabel{font-family:var(--sans);font-size:.64rem;font-weight:700;letter-spacing:.18em;
+      text-transform:uppercase;color:var(--warm);display:flex;align-items:center;gap:.8rem;}
+    .slabel::before{content:'';width:20px;height:1px;background:currentColor;flex-shrink:0;}
+    .stitle{font-family:var(--serif);font-size:clamp(2.8rem,4.5vw,5.5rem);font-weight:700;
+      line-height:.95;letter-spacing:-.025em;margin-top:.8rem;}
+    .stitle em{font-style:italic;color:var(--red);}
+    .dark .stitle em{color:#e8a090;}
+    .dark .slabel{color:rgba(240,236,227,.4);}
+    /* clickable section heading */
+    .stitle-link{transition:color .2s;cursor:none;}
+    .stitle-link:hover em{text-decoration:underline;text-underline-offset:4px;}
+
+    /* ─── ABOUT ─── */
+    #about .sec-inner{display:grid;grid-template-columns:1fr 1px 1.1fr;gap:0 5rem;align-items:start;}
+    .about-divider{background:var(--rule);}
+    .about-text .s-title{margin-bottom:2rem;}
+    .about-p{font-size:1.05rem;line-height:1.95;color:rgba(13,12,9,.7);margin-bottom:1.1rem;}
+    .about-p strong{color:var(--ink);font-weight:600;}
+    .aq{margin-top:2.5rem;padding:1.4rem 1.8rem;border-left:2px solid var(--red);background:rgba(201,56,32,.04);}
+    .aq p{font-family:var(--serif);font-style:italic;font-size:1.15rem;color:var(--red);line-height:1.55;}
+    .about-right{padding-top:1.5rem;}
+    .a-quote{margin-bottom:3rem;}
+    .a-quote p{font-family:var(--serif);font-style:italic;font-size:clamp(1.6rem,2.5vw,2.4rem);
+      line-height:1.35;color:var(--ink);letter-spacing:-.015em;border-top:2px solid var(--ink);padding-top:1.2rem;}
+    .a-facts{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--rule);}
+    .a-fact{padding:1.5rem 0;border-bottom:1px solid var(--rule);}
+    .a-fact:nth-child(odd){padding-right:2rem;border-right:1px solid var(--rule);}
+    .a-fact:nth-child(even){padding-left:2rem;}
+    .a-fn{font-family:var(--serif);font-size:2.6rem;font-weight:700;line-height:1;letter-spacing:-.03em;}
+    .a-fl{font-family:var(--sans);font-size:.62rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--warm);margin-top:.4rem;}
+
+    /* ─── TECH ─── */
+    #tech .sec-inner{display:grid;grid-template-columns:1fr 1.6fr;gap:6rem;align-items:start;}
+    .tech-intro{font-size:.95rem;line-height:1.85;color:rgba(240,236,227,.55);margin-top:1.5rem;}
+    .manifest pre{font-family:var(--mono);font-size:.82rem;line-height:1.9;color:rgba(240,236,227,.75);white-space:pre-wrap;word-break:break-word;}
+    .manifest .mk{color:#e8a090;}
+    .manifest .ms{color:rgba(240,236,227,.3);}
+    .manifest .mv{color:#a8d4c8;}
+    .manifest .mc{color:rgba(240,236,227,.22);font-style:italic;}
+
+    /* ─── PROJECTS ─── */
+    .proj-table{margin-top:3.5rem;border-top:1px solid var(--rule);}
+    .proj-row{display:grid;grid-template-columns:80px 1fr auto;gap:2rem;align-items:start;
+      padding:2.2rem 0;border-bottom:1px solid var(--rule);transition:background .3s;}
+    .proj-row:hover{background:rgba(13,12,9,.03);margin:0 calc(-1*var(--pad));padding-left:var(--pad);padding-right:var(--pad);}
+    .pn{font-family:var(--mono);font-size:.72rem;color:var(--warm);padding-top:.3rem;letter-spacing:.04em;}
+    .pb{display:flex;flex-direction:column;gap:.55rem;}
+    .pc{font-family:var(--sans);font-size:.62rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--red);}
+    .pt{font-family:var(--serif);font-size:1.65rem;font-weight:700;line-height:1.15;}
+    .pd{font-size:.88rem;line-height:1.8;color:rgba(13,12,9,.58);max-width:54ch;}
+    .pr{display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;gap:1rem;}
+    .py{font-family:var(--mono);font-size:.68rem;color:var(--warm);}
+    .ptags{display:flex;flex-wrap:wrap;gap:.3rem;justify-content:flex-end;}
+    .ptags span{font-family:var(--mono);font-size:.6rem;padding:.18rem .5rem;border:1px solid var(--rule);border-radius:2px;color:var(--warm);}
+    .plink{font-family:var(--sans);font-size:.68rem;font-weight:700;letter-spacing:.08em;
+      text-transform:uppercase;color:var(--ink);display:flex;align-items:center;gap:.3rem;
+      transition:color .2s;white-space:nowrap;}
+    .plink:hover{color:var(--red);}
+    .plink::after{content:'↗';}
+
+    /* ─── PHOTOGRAPHY (main page) ─── */
+    .gal-head{display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:end;margin-bottom:3rem;}
+    .gal-note{font-size:.9rem;line-height:1.85;color:rgba(240,236,227,.45);margin-top:1.2rem;}
+    .gallery{columns:3;column-gap:1rem;}
+    .gi{break-inside:avoid;margin-bottom:1rem;position:relative;overflow:hidden;border-radius:4px;cursor:none;}
+    .gi img{width:100%;display:block;transition:transform .6s cubic-bezier(.25,.46,.45,.94);}
+    .gi:hover img{transform:scale(1.04);}
+    .go{position:absolute;inset:0;background:linear-gradient(to top,rgba(9,8,6,.9),transparent 55%);
+      opacity:0;transition:opacity .35s;display:flex;flex-direction:column;
+      justify-content:flex-end;padding:.9rem 1rem 1.1rem;}
+    .gi:hover .go{opacity:1;}
+    .go .gt{font-family:var(--serif);font-size:.95rem;font-weight:700;color:var(--paper);}
+    .go .ge{font-family:var(--mono);font-size:.58rem;color:rgba(240,236,227,.55);letter-spacing:.06em;margin-top:.25rem;}
+    .go .gc{font-family:var(--sans);font-size:.58rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#e8a090;margin-top:.35rem;}
+
+    /* ─── NOTES (main page strip) ─── */
+    .notes-list{margin-top:3.5rem;border-top:1px solid var(--rule);}
+    .nr{display:grid;grid-template-columns:56px 1fr auto;gap:2rem;align-items:start;padding:2rem 0;border-bottom:1px solid var(--rule);}
+    .ni{font-family:var(--mono);font-size:.68rem;color:var(--warm);padding-top:.2rem;}
+    .nb{display:flex;flex-direction:column;gap:.5rem;}
+    .ncat{font-family:var(--sans);font-size:.62rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;}
+    .ncat.cl{color:var(--red);}
+    .ncat.ai{color:#8b7ec8;}
+    .ncat.sc{color:#c05858;}
+    .ntitle{font-family:var(--serif);font-size:1.4rem;font-weight:700;line-height:1.2;cursor:none;transition:color .2s;}
+    .ntitle:hover{color:var(--red);}
+    .nexc{font-size:.87rem;line-height:1.8;color:rgba(13,12,9,.55);max-width:58ch;}
+    .nright{display:flex;flex-direction:column;align-items:flex-end;gap:.7rem;}
+    .ndate{font-family:var(--mono);font-size:.64rem;color:var(--warm);white-space:nowrap;}
+    .nlink{font-family:var(--sans);font-size:.66rem;font-weight:700;letter-spacing:.1em;
+      text-transform:uppercase;color:var(--ink);display:flex;align-items:center;gap:.3rem;
+      transition:color .2s,gap .2s;white-space:nowrap;}
+    .nlink:hover{color:var(--red);gap:.55rem;}
+    .nlink::after{content:'→';}
+    .notes-all{display:inline-flex;align-items:center;gap:.5rem;margin-top:2rem;
+      font-family:var(--sans);font-size:.7rem;font-weight:700;letter-spacing:.1em;
+      text-transform:uppercase;color:var(--red);transition:gap .2s;}
+    .notes-all:hover{gap:.8rem;}
+    .notes-all::after{content:'→';}
+
+    /* ─── CONTACT ─── */
+    #contact .sec-inner{display:grid;grid-template-columns:1fr 1.1fr;gap:7rem;align-items:start;}
+    .con-copy p{margin-top:1.4rem;font-size:.97rem;line-height:1.9;color:rgba(240,236,227,.55);}
+    .clinks{margin-top:2.2rem;display:flex;flex-direction:column;gap:.7rem;}
+    .cl-item{display:flex;align-items:center;gap:.9rem;font-family:var(--mono);font-size:.75rem;color:rgba(240,236,227,.45);transition:color .2s;}
+    .cl-item:hover{color:var(--paper);}
+    .cl-icon{width:30px;height:30px;border:1px solid rgba(240,236,227,.12);border-radius:4px;
+      display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0;transition:border-color .2s;}
+    .cl-item:hover .cl-icon{border-color:rgba(240,236,227,.3);}
+    .cform{background:rgba(240,236,227,.04);border:1px solid rgba(240,236,227,.1);border-radius:6px;padding:2.2rem;}
+    .fr{margin-bottom:1.3rem;}
+    .fr label{display:block;font-family:var(--sans);font-size:.62rem;font-weight:700;
+      letter-spacing:.12em;text-transform:uppercase;color:rgba(240,236,227,.35);margin-bottom:.45rem;}
+    .fr input,.fr textarea,.fr select{width:100%;background:rgba(240,236,227,.05);
+      border:1px solid rgba(240,236,227,.1);border-radius:4px;color:var(--paper);
+      font-family:var(--sans);font-size:.92rem;padding:.68rem .9rem;outline:none;
+      transition:border-color .25s;appearance:none;}
+    .fr input:focus,.fr textarea:focus,.fr select:focus{border-color:rgba(201,56,32,.5);}
+    .fr textarea{resize:vertical;min-height:115px;}
+    .fr select option{background:var(--ink2);}
+    .btn-send{width:100%;padding:.85rem;background:var(--paper);color:var(--ink);
+      font-family:var(--sans);font-size:.72rem;font-weight:800;letter-spacing:.12em;
+      text-transform:uppercase;border-radius:4px;border:none;cursor:none;transition:background .2s,color .2s;}
+    .btn-send:hover{background:var(--red);color:var(--paper);}
+
+    /* Footer */
+    footer{padding:2.2rem var(--pad);display:flex;align-items:center;justify-content:space-between;
+      border-top:1px solid var(--rule-inv);position:relative;z-index:1;background:var(--ink2);}
+    .fl{font-family:var(--serif);font-style:italic;font-size:1rem;color:rgba(240,236,227,.35);}
+    .fc{font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;color:rgba(240,236,227,.25);}
+    .ft{font-family:var(--sans);font-size:.62rem;font-weight:700;letter-spacing:.1em;
+      text-transform:uppercase;color:rgba(240,236,227,.3);display:flex;align-items:center;gap:.3rem;transition:color .2s;}
+    .ft::before{content:'↑';}
+    .ft:hover{color:var(--paper);}
+
+    /* ─── ANIMATIONS ─── */
+    @keyframes fu{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+    @keyframes fi{from{opacity:0}to{opacity:1}}
+    @keyframes rIn{to{transform:scaleX(1)}}
+    @keyframes sP{0%,100%{opacity:.35}50%{opacity:.8}}
+    .rev{opacity:0;transform:translateY(22px);transition:opacity .8s ease,transform .8s ease;}
+    .rev.vis{opacity:1;transform:none;}
+    .d1{transition-delay:.1s}.d2{transition-delay:.2s}.d3{transition-delay:.3s}.d4{transition-delay:.45s}
+
+    /* ─── RESPONSIVE ─── */
+    @media(max-width:960px){
+      .nlinks,.ncta{display:none;} .hbg{display:flex;}
+      #about .sec-inner,#tech .sec-inner,#contact .sec-inner{grid-template-columns:1fr;gap:3rem;}
+      .about-divider{display:none;}
+      .gal-head{grid-template-columns:1fr;}
+      .gallery{columns:2;}
+      .proj-row{grid-template-columns:60px 1fr;} .pr{display:none;}
+      .nr{grid-template-columns:40px 1fr;} .nright{display:none;}
+      .photo-info{grid-template-columns:1fr;gap:2.5rem;}
+      .nlist-row{grid-template-columns:40px 1fr;} .nlist-right{display:none;}
+      .art-scroll{grid-template-columns:0 1fr 0;} .art-body{padding:3rem var(--pad) 5rem;}
+    }
+    @media(max-width:560px){
+      .gallery{columns:1;}
+      .h-last{font-size:clamp(4rem,22vw,8rem);}
+      .a-facts{grid-template-columns:1fr;}
+      .a-fact:nth-child(odd){border-right:none;padding-right:0;}
+      .a-fact:nth-child(even){padding-left:0;}
+      .exif-grid{grid-template-columns:1fr;}
+      footer{flex-direction:column;gap:.8rem;text-align:center;}
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════
+   ✏️  資料來源：rex-chang-content.json
+   請勿在此處修改內容，直接編輯 JSON 檔案即可。
+══════════════════════════════════════════════ -->
+<script>
+/* CONFIG 已移至 rex-chang-content.json，由 fetch() 載入 */
+const _PLACEHOLDER = {
+
+  personal: {
+    name:"Rex Chang", firstName:"Rex", lastName:"Chang",
+    slogan:"用代碼構建邏輯，用鏡頭捕捉情緒。",
+    location:"Taiwan", year:"2025",
+    email:"rex@rexchang.com",
+    github:"github.com/rexchang",
+    studio:"rexchangfoto.com",
+  },
+
+  hero: {
+    left:  { label:"Software Engineer", t1:"Code",  t2:"Logic",   sub:"TypeScript · Python · AWS\nGCP · Airflow · AI Agents" },
+    right: { label:"Photographer",      t1:"Light", t2:"Emotion", sub:"Wedding · Portrait\nSony A7 III · Rembrandt Light" },
+  },
+
+  about: {
+    paragraphs:[
+      "<strong>10 年的開發生涯</strong>讓我深刻理解系統架構的美學——乾淨的抽象層、可預期的行為、優雅的錯誤處理。這種對邏輯結構的直覺，同樣滲透進我拿起相機的那一刻。",
+      "我專精於<strong>雲端架構</strong>（GCP / AWS App Runner）與 <strong>AI 自動化</strong>，持有 CCSP 認證。另一面，以 <strong>Rex Chang Foto</strong> 的身份，用 Rembrandt 光影與自然感鏡頭語言，記錄婚禮與人像的真實情緒。",
+    ],
+    quote:"最好的照片和最好的代碼，都有一種讓複雜消失的能力。",
+    facts:[
+      { num:"10+",    label:"Years Engineering", red:false },
+      { num:"200+",   label:"Weddings Captured",  red:false },
+      { num:"CCSP",   label:"Cloud Security",     red:true  },
+      { num:"A7 III", label:"Primary Camera",     red:false },
+    ],
+  },
+
+  tech:{
+    intro:"10 年累積的技術棧，橫跨語言、雲端基礎設施、AI 工作流程與資安架構。",
+    manifest:[
+      {type:"comment",text:"// rex-chang · stack.manifest"},
+      {type:"brace",  text:"{"},
+      {type:"key",k:'  "languages"', v:'["TypeScript", "Python", "Node.js"]'},
+      {type:"key",k:'  "cloud"',     v:'["AWS App Runner", "GCP", "Docker / K8s", "Airflow"]'},
+      {type:"key",k:'  "frontend"',  v:'["Next.js 14", "Tailwind CSS", "Framer Motion"]'},
+      {type:"key",k:'  "ai"',        v:'["AI Agents", "LLM API", "Vibe Coding"]'},
+      {type:"key",k:'  "security"',  v:'["CCSP", "Threat Modeling", "SecOps"]'},
+      {type:"brace",  text:"}"},
+    ],
+  },
+
+  projects:[
+    { num:"01", year:"2024", cat:"Generative Art · Technical Direction",
+      title:"台北生成藝術節技術開發",
+      desc:"為藝術節打造互動式生成藝術展覽系統，整合 WebGL shaders 與即時音訊視覺化，實現觀眾參與的沉浸式體驗。",
+      tech:["WebGL","Three.js","Web Audio API"], link:"#" },
+    { num:"02", year:"2023", cat:"UI/UX · Frontend Engineering",
+      title:"政府網站 UI 全面改造",
+      desc:"主導政府服務入口網站設計翻新，以 Design System 架構提升易用性，達到 WCAG 2.1 AA 無障礙合規。",
+      tech:["Next.js","TypeScript","WCAG 2.1"], link:"#" },
+    { num:"03", year:"2024", cat:"AI · Automation",
+      title:"AI 新聞自動化腳本",
+      desc:"運用 LLM + Airflow DAG 建構全自動新聞彙整系統，每日從 50+ 媒體抓取、摘要、分類，推送個人化電子報。",
+      tech:["Python","Airflow","LLM API","GCP"], link:"#" },
+  ],
+
+  /* ── 相簿 ──
+     id 用於路由 #gallery/photo-001
+     srcFull 用於詳情頁大圖                     */
+  gallery:[
+    { id:"photo-001", src:"https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=600&q=80",
+      srcFull:"https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=1400&q=90",
+      title:"Golden Hour Portrait", titleZh:"黃金時刻人像", cat:"Portrait",
+      exif:"Sony A7 III · 85mm f/1.4 · 1/250s · ISO 400",
+      exifObj:{camera:"Sony A7 III",lens:"FE 85mm f/1.4 GM",aperture:"f/1.4",shutter:"1/250s",iso:"400",flash:"Off"},
+      description:"利用台北信義區屋頂的最後一道光，以 85mm 大光圈捕捉皮膚的暖調質感，背景散景形成柔和光圈輪廓。",
+      location:"Taipei, Taiwan" },
+    { id:"photo-002", src:"https://images.unsplash.com/photo-1519741497674-611481863552?w=600&q=80",
+      srcFull:"https://images.unsplash.com/photo-1519741497674-611481863552?w=1400&q=90",
+      title:"Wedding Ceremony", titleZh:"婚禮儀式", cat:"Wedding",
+      exif:"Sony A7 III · 35mm f/2.0 · 1/500s · ISO 800",
+      exifObj:{camera:"Sony A7 III",lens:"FE 35mm f/2.0",aperture:"f/2.0",shutter:"1/500s",iso:"800",flash:"Off"},
+      description:"教堂天光下的交換誓詞時刻，刻意低快門速度營造空氣流動感，以 35mm 廣角保留完整場景脈絡。",
+      location:"Taipei City Church" },
+    { id:"photo-003", src:"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80",
+      srcFull:"https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1400&q=90",
+      title:"Rembrandt Study", titleZh:"倫勃朗光影習作", cat:"Portrait",
+      exif:"Sony A7 III · 85mm f/1.8 · 1/160s · ISO 200",
+      exifObj:{camera:"Sony A7 III",lens:"FE 85mm f/1.8",aperture:"f/1.8",shutter:"1/160s",iso:"200",flash:"Godox AD200"},
+      description:"單燈側打造 Rembrandt 光三角形，暗部細節以反射板輕補，重現荷蘭油畫的古典立體感。",
+      location:"Home Studio" },
+    { id:"photo-004", src:"https://images.unsplash.com/photo-1537633552985-df8429e8048b?w=600&q=80",
+      srcFull:"https://images.unsplash.com/photo-1537633552985-df8429e8048b?w=1400&q=90",
+      title:"First Dance", titleZh:"第一支舞", cat:"Wedding",
+      exif:"Sony A7 III · 50mm f/1.4 · 1/200s · ISO 3200",
+      exifObj:{camera:"Sony A7 III",lens:"FE 50mm f/1.4",aperture:"f/1.4",shutter:"1/200s",iso:"3200",flash:"Off"},
+      description:"宴會廳追光燈下的第一支舞，高 ISO 加持下捕捉輪廓光與動態，背景虛化的燭光形成浪漫光源層次。",
+      location:"Grand Hyatt Taipei" },
+    { id:"photo-005", src:"https://images.unsplash.com/photo-1486325212027-8081e485255e?w=600&q=80",
+      srcFull:"https://images.unsplash.com/photo-1486325212027-8081e485255e?w=1400&q=90",
+      title:"Urban Geometry", titleZh:"城市幾何", cat:"Urban",
+      exif:"Sony A7 III · 24mm f/2.8 · 1/1000s · ISO 100",
+      exifObj:{camera:"Sony A7 III",lens:"FE 24mm f/2.8",aperture:"f/2.8",shutter:"1/1000s",iso:"100",flash:"Off"},
+      description:"台北 101 底部仰視構圖，利用建築放射線條引導視線至消失點，藍調時分的色溫增添金屬冷感。",
+      location:"Taipei 101" },
+    { id:"photo-006", src:"https://images.unsplash.com/photo-1524502397800-2eeaad7c3fe5?w=600&q=80",
+      srcFull:"https://images.unsplash.com/photo-1524502397800-2eeaad7c3fe5?w=1400&q=90",
+      title:"Natural Light Portrait", titleZh:"自然光人像", cat:"Portrait",
+      exif:"Sony A7 III · 135mm f/1.8 · 1/320s · ISO 640",
+      exifObj:{camera:"Sony A7 III",lens:"FE 135mm f/1.8 GM",aperture:"f/1.8",shutter:"1/320s",iso:"640",flash:"Off"},
+      description:"淡水漁人碼頭夕照，以 135mm 長焦壓縮背景海景，逆光輪廓勾勒髮絲質感，面部以金色反光板補光。",
+      location:"Tamsui Fisherman's Wharf" },
+    { id:"photo-007", src:"https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?w=600&q=80",
+      srcFull:"https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?w=1400&q=90",
+      title:"Ring Details", titleZh:"婚戒細節", cat:"Wedding",
+      exif:"Sony A7 III · 90mm f/2.8 Macro · 1/200s · ISO 400",
+      exifObj:{camera:"Sony A7 III",lens:"FE 90mm f/2.8 Macro",aperture:"f/2.8",shutter:"1/200s",iso:"400",flash:"Off"},
+      description:"微距捕捉婚戒細節，以花束自然景深為前景框架，散景形成夢幻暈染效果，展現婚禮報導攝影的精細面。",
+      location:"The Loftfield Taipei" },
+    { id:"photo-008", src:"https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=600&q=80",
+      srcFull:"https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=1400&q=90",
+      title:"Mountain Bridal", titleZh:"山間婚紗", cat:"Wedding",
+      exif:"Sony A7 III · 85mm f/1.4 · 1/800s · ISO 200",
+      exifObj:{camera:"Sony A7 III",lens:"FE 85mm f/1.4 GM",aperture:"f/1.6",shutter:"1/800s",iso:"200",flash:"Off"},
+      description:"陽明山芒草季拍攝，逆光加上薄霧形成天然柔焦效果，白色禮服與金色芒草的色彩對比構成視覺主軸。",
+      location:"Yangmingshan National Park" },
+    { id:"photo-009", src:"https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=600&q=80",
+      srcFull:"https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=1400&q=90",
+      title:"Street Solitude", titleZh:"街頭孤獨", cat:"Urban",
+      exif:"Sony A7 III · 35mm f/2.0 · 1/60s · ISO 6400",
+      exifObj:{camera:"Sony A7 III",lens:"FE 35mm f/2.0",aperture:"f/2.0",shutter:"1/60s",iso:"6400",flash:"Off"},
+      description:"深夜大稻埕老街，雨後反光的青石板與路燈暈光製造層次感，孤獨的行人身影成為畫面唯一溫度來源。",
+      location:"Dadaocheng, Taipei" },
+  ],
+
+  /* ── 文章 ──
+     id 用於路由 #notes/note-001
+     body 陣列: [type, content]
+     type: h2 / p / callout / pre / ul       */
+  notes:[
+    {
+      id:"note-001", catCls:"cl",
+      cat:"Cloud Architecture",
+      title:"AWS App Runner 與 GCP Cloud Run 的選擇哲學",
+      excerpt:"從容器化服務的冷啟動延遲、計費模型到 VPC 整合的細節差異，解析兩大平台在真實生產環境中的取捨。",
+      date:"2024.11", readingTime:"9 min",
+      body:[
+        ["h2","為什麼這個問題值得認真討論？"],
+        ["p","每次有人問我「要用 AWS 還是 GCP？」我都想反問：「你的 p95 延遲需求是多少？你的流量形態是長尾還是突波型？」這不是在耍滑頭，而是這兩個平台真的在設計哲學上有根本性差異。"],
+        ["h2","Cold Start：真正讓人頭痛的差距"],
+        ["p","App Runner 和 Cloud Run 都宣稱「自動擴展」，但體感差異很大。在我們的內部壓測（每分鐘 spike 到 200 req，間隔 15 分鐘無流量）中，Cloud Run p95 cold start 約 1.2s（Node.js 映像，不含 min-instances），App Runner p95 約 2.8s，但啟用 provisioned concurrency 後可壓至 400ms。"],
+        ["p","Cloud Run 的 minimum instances 設定 1 個的月費約 $7，而 App Runner 的 provisioned concurrency 按小時計費，長期運行成本高出約 2.3 倍。"],
+        ["callout","結論：偶發性、彈性需求選 Cloud Run；需要 SLA 穩定性的 API 選 App Runner + Provisioned Concurrency。"],
+        ["h2","VPC 整合的複雜度差異"],
+        ["p","App Runner 的 VPC 整合在 2022 年才正式 GA，配置上需要額外的 VPC Connector，且不支援 VPC ingress（只能走 outbound）。Cloud Run 的 Direct VPC Egress 相對乾淨，Private Service Connect 讓內部服務呼叫不經過公網。如果你的服務需要大量存取 RDS/CloudSQL、Redis 這類 VPC 內部資源，Cloud Run 在配置複雜度上少了一個心智負擔層。"],
+        ["h2","計費模型的哲學差異"],
+        ["p","Cloud Run 按「request 數 + CPU/Memory 使用時間」計費，閒置完全不收費。App Runner 則是「vCPU 時間 + 記憶體時間」，即使無流量，provisioned 實例仍持續計費。"],
+        ["h2","我的選型決策樹"],
+        ["ul","已有 AWS 既有投資（RDS、SQS、Lambda）→ App Runner|需要 Pub/Sub、BigQuery 深度整合 → Cloud Run|流量高度不規律、成本優先 → Cloud Run|金融級低延遲 SLA → App Runner + Provisioned Concurrency|跨雲策略、不想被 lock-in → Cloud Run（Knative 標準）"],
+        ["callout","沒有最好的選擇，只有最適合當下約束條件的選擇。"],
+      ],
+    },
+    {
+      id:"note-002", catCls:"ai",
+      cat:"AI · Vibe Coding",
+      title:"讓 AI Agent 真正能工作：Prompt Engineering 的底層邏輯",
+      excerpt:"超越「讓 AI 寫程式」的初學者視角，探討 Context Window 管理、Tool Calling 設計與 Agent Loop 狀態機建模。",
+      date:"2024.10", readingTime:"12 min",
+      body:[
+        ["h2","大部分 AI Agent 失敗的真正原因"],
+        ["p","我觀察過很多「AI 自動化」專案最後死在 demo 階段的案例。問題幾乎從不是模型能力不夠，而是工程師沒有把 Agent 當成一個<strong>有狀態的系統</strong>來設計。"],
+        ["h2","Context Window 是資源，不是垃圾桶"],
+        ["p","最常見的錯誤是把所有「可能有用」的資訊都塞進 system prompt。128k token 的 context window 聽起來很大，但你的 prompt + conversation history + tool results 加起來很快就爆了。"],
+        ["callout","System prompt 只放 invariant 的資訊（角色定義、output format、絕對不能做的事）。Session-specific 的資訊應透過 tool call 按需注入，不是一開始就全部灌進去。"],
+        ["p","這讓 context 的利用率從我早期專案的 30% 提升到 80%，且 agent 行為更可預測。"],
+        ["h2","Tool Calling 設計：少即是多"],
+        ["p","新手設計 tool schema 時容易犯兩個錯：Tool 太多（超過 10 個後 tool call accuracy 開始顯著下滑），以及 Tool 粒度太細。把 get_user、get_user_orders、get_user_preferences 拆成三個，不如設計一個 get_user_context(include) 的 composite tool。"],
+        ["callout","每個 tool 對應一個業務概念，而不是一個資料庫查詢。"],
+        ["h2","Agent Loop 的狀態機建模"],
+        ["p","把 agent loop 畫成狀態機，是我做過最有效的工程決策之一。每個狀態有明確的 entry condition、exit condition 和 max_iterations 限制。REFLECTING 狀態讓 agent 在執行完一批 action 後評估結果，決定是否繼續還是要求人工確認——這個節點防止了 agent 在錯誤路徑上自我強化。"],
+        ["pre","IDLE → PLANNING → EXECUTING → REFLECTING → IDLE\n                        ↓\n                 ERROR_RECOVERY"],
+        ["h2","讓 Agent 知道「不知道」"],
+        ["p","最後，最被低估的 prompt 技巧：明確告訴 agent 什麼時候應該說「我不確定，需要更多資訊」。在 system prompt 加入 confidence threshold 設定，配合合理的 confidence scoring，可以把 agent 的錯誤操作率降低 60% 以上。"],
+      ],
+    },
+    {
+      id:"note-003", catCls:"sc",
+      cat:"Security · CCSP",
+      title:"雲端安全架構師的日常：從 CCSP 到實際 Threat Modeling",
+      excerpt:"CCSP 認證是地圖，真實的攻防是地形。分享如何將 Shared Responsibility Model 轉化為可落地的安全設計決策。",
+      date:"2024.09", readingTime:"10 min",
+      body:[
+        ["h2","CCSP 給了我什麼，又沒給我什麼"],
+        ["p","拿到 CCSP 的那天我很開心。但第一天回到工作崗位，面對一個「這個 S3 bucket 要不要開 public access？」的問題，我發現 CCSP 的知識框架給了我正確的思考方向，卻沒告訴我在特定 context 下怎麼做決策。"],
+        ["callout","CCSP 是戰略地圖，Threat Modeling 才是讓你走到目的地的指南針。"],
+        ["h2","Shared Responsibility Model 的真正含義"],
+        ["p","每個雲端工程師都背得出「IaaS/PaaS/SaaS 的責任劃分」，但在實際專案中，這個模型最常被誤用的地方是：把「雲供應商負責的部分」當成「不用擔心的部分」。以 RDS 為例，AWS 負責底層 OS patch，但 security group 規則設定、加密金鑰 rotation、audit log 告警——這些全是你的責任。"],
+        ["callout","責任邊界是牆，不是地毯：牆阻擋了一部分威脅，但牆內的空間你還是要自己打掃。"],
+        ["h2","用 STRIDE 做 Cloud Architecture Threat Modeling"],
+        ["p","STRIDE（Spoofing, Tampering, Repudiation, Information Disclosure, DoS, Elevation of Privilege）是我在架構審查中最常用的框架。以典型的 API Gateway → Lambda → RDS 架構為例："],
+        ["ul","Spoofing：API Gateway 的 JWT 驗證有沒有正確設 iss 和 aud claim 檢查？|Tampering：Lambda 的 IAM role 是否遵循 least privilege？有沒有不必要的 S3:* 權限？|Repudiation：CloudTrail 是否已啟用，且 log integrity validation 已開？|Information Disclosure：RDS 的 parameter group 有沒有把 general_log 開到不必要的位置？|DoS：API Gateway 有沒有設 throttling 和 WAF rate limiting？|Elevation of Privilege：有沒有任何 Lambda 有能力 assume 比自己高權限的 role？"],
+        ["h2","我的 Threat Modeling 工作流程"],
+        ["p","架構圖繪製 → STRIDE 掃描每個元件和資料流 → DREAD 模型量化風險（Damage, Reproducibility, Exploitability, Affected users, Discoverability）→ Mitigation 優先序。高風險項目進入 sprint backlog，中風險進入技術債追蹤。"],
+        ["p","Threat Modeling 不是一次性的活動，它應該在每次重大架構變更時重新跑一遍。我的做法是在 PR template 裡加一個 checkbox：「此變更是否影響安全邊界？如是，是否已更新 Threat Model？」"],
+      ],
+    },
+  ],
+
+  contact:{
+    copy:"無論是雲端架構顧問、AI 自動化合作，還是婚禮或人像攝影——歡迎與我聊聊你的想法。",
+    inquiries:["Engineering Consultation","Wedding Photography","Portrait Session","Other"],
+  },
+
+}; // ← _PLACEHOLDER 結束（不使用，僅保留供參考）
+</script>
+
+<!-- ════════════════ DOM ════════════════ -->
+<div id="prog"><div id="prog-bar"></div></div>
+<div id="cur"><div class="ch"></div><div class="cv"></div><div class="cd"></div></div>
+
+<!-- Nav -->
+<nav id="nav">
+  <a href="#" class="nlogo" id="nav-logo" onclick="goHome();return false;"></a>
+  <ul class="nlinks" id="nav-links"></ul>
+  <a href="#contact" class="ncta" id="nav-cta">Contact</a>
+  <button class="hbg" id="hbg" aria-label="Menu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- Mobile Menu -->
+<div id="mob" aria-hidden="true">
+  <ul class="mob-links">
+    <li><a href="#about"       class="mob-link">About</a></li>
+    <li><a href="#tech"        class="mob-link">Tech</a></li>
+    <li><a href="#projects"    class="mob-link">Projects</a></li>
+    <li><a href="#photography" class="mob-link">Photography</a></li>
+    <li><a href="#notes"       class="mob-link">Notes</a></li>
+  </ul>
+  <div class="mob-cta-wrap">
+    <a href="#contact" class="mob-cta mob-link">Contact →</a>
+    <div class="mob-social">
+      <a href="mailto:rex@rexchang.com">Email</a>
+      <a href="https://github.com/rexchang" target="_blank">GitHub</a>
+    </div>
+  </div>
+  <div class="mob-foot">
+    <span class="mob-foot-name">Rex Chang</span>
+    <span class="mob-foot-loc">Taiwan · 2025</span>
+  </div>
+</div>
+
+<!-- ── VIEW: MAIN ── -->
+<div id="view-main" class="view active">
+  <section id="hero" class="sec">
+    <div class="h-marker" id="h-marker"></div>
+    <div class="h-name">
+      <p class="h-first" id="h-first"></p>
+      <div class="h-rule"></div>
+      <p class="h-last" id="h-last"></p>
+      <div class="h-reddot"></div>
+    </div>
+    <div class="h-sub" id="h-sub"></div>
+    <p class="h-slogan" id="h-slogan"></p>
+    <div class="h-scroll"><div class="h-scroll-line"></div><span>Scroll</span></div>
+  </section>
+
+  <section id="about" class="sec">
+    <div class="sec-inner">
+      <div class="about-text">
+        <div class="slabel rev">About Me</div>
+        <h2 class="stitle rev d1">在數位與<br><em>光影之間</em></h2>
+        <div id="about-body" class="rev d2"></div>
+      </div>
+      <div class="about-divider"></div>
+      <div class="about-right rev d2">
+        <div class="a-quote rev d1"><p id="a-quote"></p></div>
+        <div class="a-facts rev d2" id="a-facts"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tech" class="sec dark">
+    <div class="sec-inner">
+      <div>
+        <div class="slabel rev">Technical Skills</div>
+        <h2 class="stitle rev d1">Engineering<br><em>Arsenal</em></h2>
+        <p class="tech-intro rev d2" id="tech-intro"></p>
+      </div>
+      <div class="manifest rev d2"><pre id="manifest-pre"></pre></div>
+    </div>
+  </section>
+
+  <section id="projects" class="sec">
+    <div class="sec-inner">
+      <div class="slabel rev">Selected Work</div>
+      <h2 class="stitle rev d1">Projects &<br><em>Case Studies</em></h2>
+      <div class="proj-table rev d2" id="proj-table"></div>
+    </div>
+  </section>
+
+  <section id="photography" class="sec dark">
+    <div class="sec-inner">
+      <div class="gal-head">
+        <div>
+          <div class="slabel rev">Visual Work</div>
+          <h2 class="stitle rev d1">Photography<br><em>Gallery</em></h2>
+        </div>
+        <p class="gal-note rev d2">點擊照片可查看詳細資訊與相機參數。以 Sony A7 III 系統為主，擅長 Rembrandt 光影與自然感人像。</p>
+      </div>
+      <div class="gallery rev d3" id="gallery"></div>
+    </div>
+  </section>
+
+  <section id="notes" class="sec">
+    <div class="sec-inner">
+      <div class="slabel rev">Engineering Notes</div>
+      <a href="#notes-list" class="stitle stitle-link rev d1" id="notes-heading">Thoughts on<br><em>Code & Systems</em></a>
+      <div class="notes-list rev d2" id="notes-list-main"></div>
+      <a href="#notes-list" class="notes-all rev d3" id="notes-all-link">All Articles</a>
+    </div>
+  </section>
+
+  <section id="contact" class="sec dark">
+    <div class="sec-inner">
+      <div class="con-copy">
+        <div class="slabel rev">Get In Touch</div>
+        <h2 class="stitle rev d1">Let's Create<br><em>Together</em></h2>
+        <p class="rev d2" id="con-copy"></p>
+        <div class="clinks rev d3" id="clinks"></div>
+      </div>
+      <div class="cform rev d2">
+        <form id="cform">
+          <div class="fr"><label>Your Name</label><input type="text" placeholder="Jane Doe" required/></div>
+          <div class="fr"><label>Email</label><input type="email" placeholder="hello@example.com" required/></div>
+          <div class="fr"><label>Inquiry</label><select id="inq-sel"><option value="">Select…</option></select></div>
+          <div class="fr"><label>Message</label><textarea placeholder="Tell me about your project…"></textarea></div>
+          <button type="submit" class="btn-send">Send Message →</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span class="fl" id="ft-name"></span>
+    <span class="fc" id="ft-copy"></span>
+    <a href="#hero" class="ft"> Back to Top</a>
+  </footer>
+</div>
+
+<!-- ── VIEW: NOTES LIST ── -->
+<div id="view-notes" class="view">
+  <a href="#" class="back-btn" onclick="goHome();return false;">Home</a>
+  <div class="nlist-hero">
+    <div class="slabel">Engineering Notes</div>
+    <h1 class="nlist-title">Thoughts on<br><em>Code & Systems</em></h1>
+  </div>
+  <div class="nlist-body" id="nlist-body"></div>
+</div>
+
+<!-- ── VIEW: ARTICLE DETAIL ── -->
+<div id="view-article" class="view">
+  <a href="#notes-list" class="back-btn" id="art-back">Engineering Notes</a>
+  <div id="art-content"></div>
+</div>
+
+<!-- ── VIEW: PHOTO DETAIL ── -->
+<div id="view-photo" class="view">
+  <a href="#" class="back-btn inv" onclick="history.back();return false;">Gallery</a>
+  <div id="photo-content"></div>
+</div>
+
+<!-- ════════════════ SCRIPTS ════════════════ -->
+<script>
+/* ─── GLOBAL DATA ─── */
+let SITE = null; // populated after fetch
+
+/* ─── INLINE FALLBACK DATA ────────────────────────────────────────────
+   personal / about / meta 不常變動，直接內嵌在 HTML 中。
+   即使 JSON / GAS 都失敗，網站仍可正常渲染。
+   ─────────────────────────────────────────────────────────────────── */
+const FALLBACK = {
+  meta: {
+    version: '1.1.0',
+    siteTitle: 'Rex Chang — Engineer & Photographer',
+    description: 'Rex Chang 個人作品集',
+  },
+  personal: {
+    name: 'Rex Chang', nameZh: '張瑞克',
+    firstName: 'Rex', lastName: 'Chang',
+    title: 'Software Engineer · Photographer',
+    slogan: '用代碼構建邏輯，用鏡頭捕捉情緒。',
+    sloganEn: 'Build logic with code. Capture emotion with light.',
+    location: 'Taiwan', city: 'Taipei', year: '2025',
+    email: 'rex@rexchang.com',
+    github: 'github.com/rexchang',
+    studio: 'rexchangfoto.com',
+    linkedin: 'linkedin.com/in/rexchang',
+    yearsEngineering: 10,
+  },
+  about: {
+    paragraphs: [
+      '<strong>10 年的開發生涯</strong>讓我深刻理解系統架構的美學——乾淨的抽象層、可預期的行為、優雅的錯誤處理。這種對邏輯結構的直覺，同樣滲透進我拿起相機的那一刻。',
+      '我專精於<strong>雲端架構</strong>（GCP / AWS App Runner）與 <strong>AI 自動化</strong>，持有 CCSP 認證。另一面，以 <strong>Rex Chang Foto</strong> 的身份，用 Rembrandt 光影與自然感鏡頭語言，記錄婚禮與人像的真實情緒。',
+    ],
+    quote: '最好的照片和最好的代碼，都有一種讓複雜消失的能力。',
+    facts: [
+      { num: '10+',    label: 'Years Engineering', red: false },
+      { num: '200+',   label: 'Weddings Captured',  red: false },
+      { num: 'CCSP',   label: 'Cloud Security',     red: true  },
+      { num: 'A7 III', label: 'Primary Camera',     red: false },
+    ],
+  },
+  techStack: {
+    intro: '10 年累積的技術棧，橫跨語言、雲端基礎設施、AI 工作流程與資安架構。',
+    categories: [
+      { label: 'Languages',    items: [{ icon:'📘', name:'TypeScript', yearsExp:7 }, { icon:'🐍', name:'Python', yearsExp:8 }, { icon:'⚙️', name:'Node.js', yearsExp:9 }] },
+      { label: 'Cloud & Infra',items: [{ icon:'☁️', name:'AWS App Runner', yearsExp:4 }, { icon:'🌐', name:'GCP Cloud Run', yearsExp:3 }, { icon:'🐳', name:'Docker / K8s', yearsExp:6 }] },
+      { label: 'Frontend',     items: [{ icon:'⚛️', name:'Next.js 14', yearsExp:4 }, { icon:'🎨', name:'Tailwind CSS', yearsExp:4 }] },
+      { label: 'AI & Security',items: [{ icon:'🤖', name:'AI Agents / LLM', yearsExp:2 }, { icon:'🔐', name:'CCSP / SecOps', yearsExp:3 }] },
+    ],
+  },
+  contact: {
+    copy: '無論是雲端架構顧問、AI 自動化合作，還是婚禮或人像攝影——歡迎與我聊聊你的想法。',
+    email: 'rex@rexchang.com',
+    studioEmail: 'studio@rexchangfoto.com',
+    inquiryTypes: ['Engineering Consultation', 'Wedding Photography', 'Portrait Session', 'Other'],
+  },
+  projects: [],
+  gallery:  [],
+  notes:    [],
+};
+
+/* ─── MANIFEST BUILDER from techStack.categories ─── */
+function buildManifestHTML(techStack){
+  const lines = [];
+  lines.push(`<span class="mc">// rex-chang · stack.manifest</span>`);
+  lines.push(`<span class="ms">{</span>`);
+  techStack.categories.forEach((cat, i) => {
+    const comma = i < techStack.categories.length - 1 ? ',' : '';
+    const key = `  "${cat.label.toLowerCase().replace(/ & /g,'_').replace(/ /g,'_')}"`;
+    const val = JSON.stringify(cat.items.map(it=>it.name));
+    lines.push(`<span class="mk">${key}</span><span class="ms">: </span><span class="mv">${val}</span><span class="ms">${comma}</span>`);
+  });
+  lines.push(`<span class="ms">}</span>`);
+  return lines.join('\n');
+}
+
+/* ─── RENDER from JSON data ─── */
+function renderSite(C){
+  // 每個區塊都以 FALLBACK 補底，確保即使 GAS / JSON 部分失敗也不崩潰
+  const meta      = C.meta      || FALLBACK.meta;
+  const P         = C.personal  || FALLBACK.personal;
+  const about     = C.about     || FALLBACK.about;
+  const techStack = C.techStack || FALLBACK.techStack;
+  const projects  = C.projects  || FALLBACK.projects;
+  const gallery   = C.gallery   || FALLBACK.gallery;
+  const notes     = C.notes     || FALLBACK.notes;
+  const contact   = C.contact   || FALLBACK.contact;
+
+  // 將補全後的資料存回，供路由函數使用
+  SITE = { meta, personal:P, about, techStack, projects, gallery, notes, contact };
+  const fullC = SITE;
+
+  document.getElementById('pg-title').textContent = meta.siteTitle || (P.name + ' — Engineer & Photographer');
+  document.getElementById('nav-logo').innerHTML = P.firstName[0] + '<em>' + P.lastName[0] + '</em>';
+  document.getElementById('nav-links').innerHTML =
+    [['#about','About'],['#tech','Tech'],['#projects','Projects'],['#photography','Photography'],['#notes','Notes']]
+    .map(([h,l]) => `<li><a href="${h}">${l}</a></li>`).join('');
+
+  // hero — split title on " · " for left/right labels
+  const titleParts = (P.title || 'Software Engineer · Photographer').split(' · ');
+  document.getElementById('h-marker').innerHTML = `<span>01</span><span>PORTFOLIO · ${P.year || new Date().getFullYear()}</span>`;
+  document.getElementById('h-first').textContent = P.firstName;
+  document.getElementById('h-last').textContent = P.lastName;
+  document.getElementById('h-sub').innerHTML =
+    `${titleParts[0]||''}<span class="h-sep"> · </span>${titleParts[1]||''}<span class="h-sep"> · </span>${P.location}`;
+  document.getElementById('h-slogan').textContent = P.slogan;
+
+  // about
+  document.getElementById('about-body').innerHTML = about.paragraphs.map(p => `<p class="about-p">${p}</p>`).join('');
+  document.getElementById('a-quote').textContent = about.quote;
+  document.getElementById('a-facts').innerHTML = about.facts.map(f => `
+    <div class="a-fact"><div class="a-fn" style="${f.red ? 'color:var(--red)' : ''}">${f.num}</div><div class="a-fl">${f.label}</div></div>`).join('');
+
+  // tech — build manifest from techStack.categories
+  document.getElementById('tech-intro').textContent = techStack.intro;
+  document.getElementById('manifest-pre').innerHTML = buildManifestHTML(techStack);
+
+  // projects
+  document.getElementById('proj-table').innerHTML = projects.map(p => `
+    <div class="proj-row">
+      <div class="pn">${p.num}<br><span style="font-size:.58rem;color:var(--warm)">${p.year}</span></div>
+      <div class="pb"><div class="pc">${p.category}</div><div class="pt">${p.title}</div><p class="pd">${p.description}</p></div>
+      <div class="pr"><div class="py">${p.year}</div>
+        <div class="ptags">${(p.tech||[]).map(t => `<span>${t}</span>`).join('')}</div>
+        <a href="${p.link||'#'}" class="plink">View</a>
+      </div>
+    </div>`).join('');
+
+  // gallery (main page — 6 items)
+  const gal = document.getElementById('gallery');
+  gal.innerHTML = '';
+  gallery.slice(0, 6).forEach((g, i) => {
+    const d = document.createElement('div');
+    d.className = 'gi rev' + (i % 3 === 1 ? ' d1' : i % 3 === 2 ? ' d2' : '');
+    d.dataset.id = g.id;
+    d.innerHTML = `<img src="${g.src}" alt="${g.title}" loading="lazy"/>
+      <div class="go"><div class="gt">${g.title}</div><div class="ge">${g.exifString||''}</div><div class="gc">${g.category||''}</div></div>`;
+    gal.appendChild(d);
+  });
+  gal.addEventListener('click', e => {
+    const gi = e.target.closest('.gi'); if (!gi) return;
+    location.hash = 'gallery/' + gi.dataset.id;
+  });
+
+  // notes (main page — 3 items)
+  document.getElementById('notes-list-main').innerHTML = notes.map((n, i) => `
+    <div class="nr">
+      <div class="ni">0${i + 1}</div>
+      <div class="nb">
+        <div class="ncat ${n.categoryClass||''}">${n.category||''}</div>
+        <a href="#notes/${n.id}" class="ntitle">${n.title}</a>
+        <p class="nexc">${n.excerpt||''}</p>
+      </div>
+      <div class="nright">
+        <span class="ndate">${n.dateFormatted||n.date||''}</span>
+        <a href="#notes/${n.id}" class="nlink">Read</a>
+      </div>
+    </div>`).join('');
+
+  // contact
+  document.getElementById('con-copy').textContent = contact.copy;
+  document.getElementById('clinks').innerHTML = [
+    ['✉', P.email,   `mailto:${P.email}`],
+    ['⌥', P.github,  `https://${P.github}`],
+    ['◎', P.studio,  `https://${P.studio}`],
+    ['📍', P.location, '#'],
+  ].map(([ic, tx, hr]) => `<a href="${hr}" class="cl-item"><div class="cl-icon">${ic}</div>${tx}</a>`).join('');
+  (contact.inquiryTypes || []).forEach(v => {
+    const o = document.createElement('option');
+    o.value = v; o.textContent = v;
+    document.getElementById('inq-sel').appendChild(o);
+  });
+  document.getElementById('ft-name').textContent = P.name;
+  document.getElementById('ft-copy').textContent = `© ${new Date().getFullYear()} · ${P.location}`;
+
+  // contact form
+  document.getElementById('cform').addEventListener('submit', e => {
+    e.preventDefault();
+    const b = e.target.querySelector('.btn-send');
+    b.textContent = 'Sent ✓'; b.style.background = '#22c55e'; b.style.color = '#fff';
+    setTimeout(() => { b.textContent = 'Send Message →'; b.style.background = ''; b.style.color = ''; e.target.reset(); }, 3000);
+  });
+
+  // re-observe scroll reveal for newly rendered elements
+  document.querySelectorAll('.rev:not([data-observed])').forEach(el => {
+    el.dataset.observed = '1';
+    ioR.observe(el);
+  });
+
+  // run router in case page loaded with a hash
+  router();
+}
+
+/* ─── FETCH JSON & INIT ─── */
+/* ══════════════════════════════════════════════
+   🔗  DATA SOURCE CONFIG
+   修改下面的 GAS_URL 指向你的 Apps Script。
+   留空字串 '' 則直接使用本地 rex-chang-content.json。
+══════════════════════════════════════════════ */
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyeokANGOTrbjKalFvgbkB6CzanudXPD7hySxy_woqHAH8_gkhUvMEIcbvlIEQUpZB4/exec';
+const LOCAL_JSON = './rex-chang-content.json';
+
+/* ─── GAS 資料轉換工具函數 ─── */
+
+/** key/value 列陣列 → 物件 (meta, personal, contact 用) */
+function gasKvToObj(rows) {
+  if (!Array.isArray(rows)) return {};
+  const obj = {};
+  rows.forEach(r => { if (r.key) obj[r.key] = r.value; });
+  return obj;
+}
+
+/** techstack 列陣列 → {intro, categories} */
+function gasTechStack(rows, intro = '') {
+  if (!Array.isArray(rows) || !rows.length) return null;
+  const map = {};
+  rows.forEach(r => {
+    const cat = r.category || 'Other';
+    if (!map[cat]) map[cat] = { label: cat, items: [] };
+    map[cat].items.push({
+      icon: r.icon || '',
+      name: r.name || '',
+      yearsExp: parseInt(r.yearsExp) || 0,
+    });
+  });
+  return { intro, categories: Object.values(map) };
+}
+
+/** contact key/value 列 → contact 物件 (inquiryType_N 分組) */
+function gasContact(rows) {
+  if (!Array.isArray(rows) || !rows.length) return null;
+  const obj = {};
+  const inquiryTypes = [];
+  rows.forEach(r => {
+    if (!r.key) return;
+    if (r.key.startsWith('inquiryType_')) inquiryTypes.push(r.value);
+    else obj[r.key] = r.value;
+  });
+  if (inquiryTypes.length) obj.inquiryTypes = inquiryTypes;
+  return obj;
+}
+
+/** projects 列陣列 → 陣列
+ *  CSV 欄位：id, num, year, category, title, description, tech, link, status, featured
+ */
+function gasProjects(rows) {
+  if (!Array.isArray(rows) || !rows.length) return null;
+  return rows.map(r => ({
+    ...r,
+    year: parseInt(r.year) || r.year,
+    tech: typeof r.tech === 'string' ? r.tech.split(',').map(t => t.trim()).filter(Boolean) : (r.tech || []),
+    featured: r.featured === 'true' || r.featured === true,
+    link: r.link || '#',
+  }));
+}
+
+/** gallery 列陣列 → 陣列
+ *  CSV 欄位：id, title, titleZh, category, description, src,
+ *            camera, lens, focalLength, aperture, shutterSpeed, iso, flash, location, featured
+ */
+function gasGallery(rows) {
+  if (!Array.isArray(rows) || !rows.length) return null;
+  return rows.map(r => {
+    // flash: Sheets 存 true/false 字串，轉回可讀文字
+    const flashVal = (r.flash === 'true' || r.flash === true) ? 'On' :
+                     (r.flash === 'false' || r.flash === false) ? 'Off' :
+                     (r.flash || 'Off');
+    const exif = {
+      Camera:      r.camera      || '',
+      Lens:        r.lens        || '',
+      'Focal Length': r.focalLength || '',
+      Aperture:    r.aperture    || '',
+      Shutter:     r.shutterSpeed || '',
+      ISO:         r.iso         || '',
+      Flash:       flashVal,
+    };
+    // srcFull：把 w=600 換成 w=1400，或直接用 src
+    const srcFull = r.srcFull || (r.src || '').replace('w=600', 'w=1400').replace('q=80', 'q=90');
+    return {
+      ...r,
+      srcFull,
+      category: r.category || '',
+      exifString: r.exifString ||
+        [r.camera, r.lens, r.focalLength, r.aperture, r.shutterSpeed, r.iso ? `ISO ${r.iso}` : '']
+          .filter(Boolean).join(' · '),
+      exif,
+      featured: r.featured === 'true' || r.featured === true,
+    };
+  });
+}
+
+/** notes 列陣列 → 陣列
+ *  CSV 欄位：id, slug, category, categoryClass, title, excerpt, date, tags, readingTimeMin, featured
+ *  body 只能從 local rex-chang-content.json 補充（CSV/Sheets 放不下結構化內容）
+ */
+function gasNotes(rows, localNotes = []) {
+  if (!Array.isArray(rows) || !rows.length) return null;
+  return rows.map(r => {
+    const local = localNotes.find(n => n.id === r.id || n.slug === r.slug) || {};
+    // date 格式轉換：2024-11-15 → 2024.11
+    const dateFormatted = r.dateFormatted || (r.date || '').replace(/^(\d{4})-(\d{2}).*$/, '$1.$2');
+    return {
+      ...r,
+      dateFormatted,
+      readingTimeMin: parseInt(r.readingTimeMin) || 0,
+      tags: typeof r.tags === 'string' ? r.tags.split(',').map(t => t.trim()).filter(Boolean) : (r.tags || []),
+      featured: r.featured === 'true' || r.featured === true,
+      body: local.body || [],  // body 只來自 local JSON
+    };
+  });
+}
+
+/* ─── 單一表格抓取 ─── */
+async function fetchGasTable(tableName) {
+  const url = `${GAS_URL}?table=${tableName}`;
+  console.log(`[GAS] Fetching ${url}`);
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const raw = await res.text();
+  console.log(`[GAS] ${tableName} raw (first 300 chars):`, raw.slice(0, 300));
+  const json = JSON.parse(raw);
+  console.log(`[GAS] ${tableName} parsed:`, json);
+  return json;
+}
+
+/* ─── 主要載入邏輯 ─── */
+(async () => {
+  // 1. 永遠先載入本地 JSON（作為 fallback + notes body 來源）
+  let base = null;
+  try {
+    const res = await fetch(LOCAL_JSON);
+    if (res.ok) base = await res.json();
+    console.log('[LOCAL] rex-chang-content.json 載入成功');
+  } catch (e) {
+    console.warn('[LOCAL] 無法載入本地 JSON:', e.message);
+  }
+
+  // 2. 若有設定 GAS_URL，嘗試從各表格抓取並覆蓋
+  if (GAS_URL) {
+    try {
+      // ⚠️ 表格名稱必須與 Google Sheets tab 名稱完全一致
+      const tables = [
+        'rex-chang-meta',       // key/value 格式
+        'rex-chang-techstack',  // category/icon/name/yearsExp
+        'rex-chang-projects',   // 專案列表
+        'rex-chang-albums',     // 相簿（注意：不是 gallery）
+        'rex-chang-notes',      // 文章 metadata
+        'rex-chang-contact',    // key/value 格式
+      ];
+
+      // 並行抓取全部表格（個別失敗不影響其他）
+      const results = await Promise.allSettled(
+        tables.map(t => fetchGasTable(t))
+      );
+
+      const [gasMeta, gasTech, gasProj, gasGal, gasNote, gasCon] = results.map(r => {
+        if (r.status === 'fulfilled') return r.value;
+        console.warn('[GAS] 表格失敗:', r.reason?.message);
+        return null;
+      });
+
+      // 3. 合併：FALLBACK → 本地 JSON → GAS（後者優先級更高）
+      const merged = { ...FALLBACK, ...(base || {}) };
+
+      const metaObj = gasMeta ? gasKvToObj(gasMeta) : null;
+      if (metaObj && Object.keys(metaObj).length) merged.meta = metaObj;
+
+      const techObj = gasTech ? gasTechStack(gasTech, base?.techStack?.intro) : null;
+      if (techObj) merged.techStack = techObj;
+
+      const projArr = gasProjects(gasProj);
+      if (projArr) merged.projects = projArr;
+
+      const galArr = gasGallery(gasGal);
+      if (galArr) merged.gallery = galArr;
+
+      const notesArr = gasNotes(gasNote, base?.notes);
+      if (notesArr) merged.notes = notesArr;
+
+      const conObj = gasContact(gasCon);
+      if (conObj) merged.contact = conObj;
+
+      console.log('[MERGED] 最終資料結構:', merged);
+
+      if (merged.personal || merged.meta) {
+        renderSite(merged);
+        return;
+      }
+    } catch (err) {
+      console.error('[GAS] 整體失敗，改用本地 JSON:', err);
+    }
+  }
+
+  // 4. Fallback：本地 JSON 或直接用內嵌 FALLBACK 資料
+  console.log('[FALLBACK] 使用本地 JSON / 內嵌資料');
+  renderSite(base || FALLBACK);
+  if (!base) {
+    // file:// 協定提示
+    if (location.protocol === 'file:') {
+      document.body.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;
+          font-family:'Cormorant Garamond',Georgia,serif;background:#f0ece3;color:#0d0c09;padding:3rem;text-align:center;">
+          <div>
+            <p style="font-size:3rem;font-weight:700;letter-spacing:-.04em;margin-bottom:1.5rem;">Run with a local server</p>
+            <p style="font-size:1.1rem;line-height:1.8;color:#8a8478;max-width:40ch;margin:0 auto 2rem;">
+              瀏覽器安全政策不允許 <code>file://</code> 協定直接讀取 JSON 檔案。
+            </p>
+            <pre style="background:#0d0c09;color:#e2e8f0;padding:1.2rem 2rem;border-radius:5px;
+              font-family:'Fira Code',monospace;font-size:.9rem;display:inline-block;text-align:left;">npx serve .
+# 或
+python3 -m http.server 8000</pre>
+          </div>
+        </div>`;
+    }
+  }
+})();
+
+/* ─── ROUTER ─── */
+function showView(id){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  // cursor invert on dark views
+  const darkViews=['view-photo'];
+  document.body.classList.toggle('inv', darkViews.includes(id));
+  window.scrollTo({top:0,behavior:'instant'});
+}
+
+function goHome(){
+  history.pushState(null,'',location.pathname);
+  showView('view-main');
+}
+
+function renderNotesList(){
+  if(!SITE){return;}
+  const C=SITE;
+  document.getElementById('nlist-body').innerHTML=C.notes.map((n,i)=>`
+    <div class="nlist-row" onclick="location.hash='notes/${n.id}'">
+      <div class="nlist-idx">0${i+1}</div>
+      <div class="nlist-info">
+        <div class="nlist-cat ${n.categoryClass}">${n.category}</div>
+        <div class="nlist-t">${n.title}</div>
+        <p class="nlist-exc">${n.excerpt}</p>
+      </div>
+      <div class="nlist-right">
+        <span class="nlist-date">${n.dateFormatted}</span>
+        <a href="#notes/${n.id}" class="nlist-read" onclick="event.stopPropagation()">Read</a>
+      </div>
+    </div>`).join('');
+  showView('view-notes');
+}
+
+/* Body renderer — supports both:
+   new format: [{type, text}] / [{type, items:[]}]
+   legacy format: [[type, content]] (pipe-separated ul items) */
+function renderBodyHTML(body){
+  return body.map(block=>{
+    // new object format
+    if(typeof block === 'object' && !Array.isArray(block)){
+      const {type,text,items} = block;
+      if(type==='h2') return `<h2>${text}</h2>`;
+      if(type==='p')  return `<p>${text}</p>`;
+      if(type==='callout') return `<blockquote class="callout">${text}</blockquote>`;
+      if(type==='pre') return `<pre><code>${(text||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</code></pre>`;
+      if(type==='ul') {
+        const listItems = items || (text||'').split('|');
+        return `<ul>${listItems.map(li=>`<li>${li}</li>`).join('')}</ul>`;
+      }
+      return '';
+    }
+    // legacy array format [type, content]
+    const [type,content] = block;
+    if(type==='h2') return `<h2>${content}</h2>`;
+    if(type==='p')  return `<p>${content}</p>`;
+    if(type==='callout') return `<blockquote class="callout">${content}</blockquote>`;
+    if(type==='pre') return `<pre><code>${content.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</code></pre>`;
+    if(type==='ul') return `<ul>${content.split('|').map(li=>`<li>${li}</li>`).join('')}</ul>`;
+    return '';
+  }).join('');
+}
+
+function renderArticle(id){
+  if(!SITE){return;}
+  const C=SITE;
+  const note=C.notes.find(n=>n.id===id);
+  if(!note){goHome();return;}
+  const idx=C.notes.indexOf(note);
+  const prev=C.notes[idx-1], next=C.notes[idx+1];
+  const dateStr = note.dateFormatted || note.date || '';
+  const readStr = note.readingTimeMin ? note.readingTimeMin+' min read' : (note.readingTime||'');
+  document.getElementById('art-content').innerHTML=`
+    <div class="art-hero">
+      <div class="art-meta">
+        <span class="amc">${note.category}</span>
+        <span>${dateStr}</span>
+        <span>${readStr}</span>
+      </div>
+      <h1 class="art-title">${note.title}</h1>
+    </div>
+    <div class="art-scroll">
+      <div></div>
+      <div class="art-body">${renderBodyHTML(note.body)}</div>
+      <div></div>
+    </div>
+    <div class="art-nav">
+      <div>
+        ${prev?`<a href="#notes/${prev.id}" class="art-nav-btn"><span>← Previous</span><span class="ant">${prev.title}</span></a>`:'<span></span>'}
+      </div>
+      <div>
+        ${next?`<a href="#notes/${next.id}" class="art-nav-btn next"><span>Next →</span><span class="ant">${next.title}</span></a>`:'<span></span>'}
+      </div>
+    </div>`;
+  document.getElementById('art-back').href='#notes-list';
+  document.getElementById('pg-title').textContent=note.title+' — Rex Chang';
+  showView('view-article');
+}
+
+function renderPhoto(id){
+  if(!SITE){return;}
+  const C=SITE;
+  const photo=C.gallery.find(p=>p.id===id);
+  if(!photo){goHome();return;}
+  const idx=C.gallery.indexOf(photo);
+  const prev=C.gallery[idx-1], next=C.gallery[idx+1];
+  // support both exif (new) and exifObj (legacy) field names
+  const exifData = photo.exif || photo.exifObj || {};
+  document.getElementById('photo-content').innerHTML=`
+    <div class="photo-wrap">
+      <img src="${photo.srcFull||photo.src.replace('w=600','w=1400')}" alt="${photo.title}" loading="eager"/>
+    </div>
+    <div class="photo-info">
+      <div class="pi-left">
+        <div class="pi-title">${photo.title}</div>
+        <div class="pi-title-zh">${photo.titleZh||''}</div>
+        <div class="pi-cat">${photo.category||photo.cat||''}</div>
+        <div class="pi-loc">📍 ${photo.location||''}</div>
+        <p class="pi-desc">${photo.description||''}</p>
+      </div>
+      <div class="pi-right">
+        <div class="exif-label">Camera Data</div>
+        <div class="exif-grid">
+          ${Object.entries(exifData).map(([k,v])=>`
+            <div class="exif-item"><div class="exif-k">${k}</div><div class="exif-v">${v}</div></div>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="photo-nav-row">
+      <button class="photo-nav-btn" ${!prev?'disabled':''} onclick="location.hash='gallery/${prev?.id}'">← Prev</button>
+      <button class="photo-nav-btn" onclick="location.hash=''">All Photos</button>
+      <button class="photo-nav-btn" ${!next?'disabled':''} onclick="location.hash='gallery/${next?.id}'">Next →</button>
+    </div>`;
+  document.getElementById('pg-title').textContent=photo.title+' — Rex Chang';
+  showView('view-photo');
+}
+
+function router(){
+  const hash=location.hash.slice(1); // remove #
+  if(!hash || hash===''){
+    document.getElementById('pg-title').textContent='Rex Chang — Engineer & Photographer';
+    showView('view-main'); return;
+  }
+  if(hash==='notes-list'){ renderNotesList(); return; }
+  const noteMatch=hash.match(/^notes\/(.+)$/);
+  if(noteMatch){ renderArticle(noteMatch[1]); return; }
+  const photoMatch=hash.match(/^gallery\/(.+)$/);
+  if(photoMatch){ renderPhoto(photoMatch[1]); return; }
+  showView('view-main');
+}
+
+window.addEventListener('hashchange', router);
+window.addEventListener('load', ()=>{
+  if(location.hash && location.hash.length > 1) router();
+});
+
+// notes section heading and "All Articles" → notes list
+document.getElementById('notes-heading')?.addEventListener('click',e=>{
+  e.preventDefault(); location.hash='notes-list';
+});
+document.getElementById('notes-all-link')?.addEventListener('click',e=>{
+  e.preventDefault(); location.hash='notes-list';
+});
+
+/* ─── HAMBURGER ─── */
+const hbg=document.getElementById('hbg'),mob=document.getElementById('mob');
+function openMob(){hbg.classList.add('open');mob.classList.add('open');hbg.setAttribute('aria-expanded','true');mob.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';}
+function closeMob(){hbg.classList.remove('open');mob.classList.remove('open');hbg.setAttribute('aria-expanded','false');mob.setAttribute('aria-hidden','true');document.body.style.overflow='';}
+hbg.addEventListener('click',()=>mob.classList.contains('open')?closeMob():openMob());
+document.querySelectorAll('.mob-link').forEach(a=>a.addEventListener('click',closeMob));
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeMob();if(document.getElementById('lb')?.classList.contains('open')){document.getElementById('lb').classList.remove('open');document.body.style.overflow=''}}});
+
+/* ─── CURSOR ─── */
+const cur=document.getElementById('cur');
+const ch=cur.querySelector('.ch'),cv=cur.querySelector('.cv');
+let mx=0,my=0;
+document.addEventListener('mousemove',e=>{
+  mx=e.clientX; my=e.clientY;
+  cur.style.transform=`translate(${mx}px,${my}px)`;
+});
+document.addEventListener('mouseleave',()=>cur.style.opacity=0);
+document.addEventListener('mouseenter',()=>cur.style.opacity=1);
+document.querySelectorAll('a,button,.gi,.proj-row,.nlist-row,.nr').forEach(el=>{
+  el.addEventListener('mouseenter',()=>document.body.classList.add('hover'));
+  el.addEventListener('mouseleave',()=>document.body.classList.remove('hover'));
+});
+
+/* ─── SCROLL PROGRESS + NAV ─── */
+window.addEventListener('scroll',()=>{
+  const h=document.documentElement;
+  document.getElementById('prog-bar').style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%';
+  document.getElementById('nav').classList.toggle('on',scrollY>80);
+});
+
+/* ─── SCROLL REVEAL ─── */
+const ioR=new IntersectionObserver(es=>es.forEach(e=>{
+  if(e.isIntersecting){e.target.classList.add('vis');ioR.unobserve(e.target);}
+}),{threshold:.1});
+document.querySelectorAll('.rev').forEach(el=>ioR.observe(el));
+</script>
+</body>
+</html>

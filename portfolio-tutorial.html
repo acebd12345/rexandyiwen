@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>從 Google Sheets 到個人網站 — Rex Chang 教學</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Noto+Serif+TC:wght@300;400;700;900&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #070608;
+  --ink: #f0ece3;
+  --red: #ff3b1f;
+  --amber: #ffae1a;
+  --dim: rgba(240,236,227,.14);
+  --dim2: rgba(240,236,227,.06);
+  --mono: 'Space Mono', monospace;
+  --display: 'Bebas Neue', sans-serif;
+  --serif: 'Noto Serif TC', serif;
+}
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--mono);
+  overflow-x: hidden;
+  cursor: crosshair;
+}
+::selection { background: var(--red); color: #fff; }
+img { display: block; max-width: 100%; }
+a { color: inherit; text-decoration: none; }
+
+/* ── NOISE OVERLAY ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 9000; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.035'/%3E%3C/svg%3E");
+  opacity: .6;
+}
+
+/* ── PROGRESS BAR ── */
+#prog {
+  position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 8000;
+  background: var(--dim);
+}
+#prog-fill {
+  height: 100%; width: 0%; background: var(--red);
+  box-shadow: 0 0 12px var(--red);
+  transition: width .08s linear;
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.4rem 3rem;
+  transition: background .4s, border-color .4s;
+  border-bottom: 1px solid transparent;
+}
+nav.on {
+  background: rgba(7,6,8,.88);
+  backdrop-filter: blur(24px);
+  border-color: var(--dim);
+}
+.n-logo {
+  font-family: var(--display);
+  font-size: 1.5rem;
+  letter-spacing: .12em;
+  color: var(--ink);
+}
+.n-logo span { color: var(--red); }
+.n-steps {
+  display: flex; gap: 2rem; list-style: none;
+}
+.n-steps li a {
+  font-size: .6rem; font-weight: 700; letter-spacing: .18em; text-transform: uppercase;
+  color: rgba(240,236,227,.35); transition: color .2s; padding-bottom: 2px;
+  border-bottom: 1px solid transparent; transition: color .2s, border-color .2s;
+}
+.n-steps li a:hover, .n-steps li a.active {
+  color: var(--ink); border-color: var(--red);
+}
+
+/* ── HERO ── */
+#hero {
+  min-height: 100vh;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  padding: 10rem 3rem 4rem;
+  position: relative; overflow: hidden;
+}
+.hero-eyebrow {
+  font-size: .65rem; letter-spacing: .22em; text-transform: uppercase;
+  color: var(--red); margin-bottom: 1.5rem;
+  opacity: 0; animation: fadeUp .6s ease .3s forwards;
+  display: flex; align-items: center; gap: 1rem;
+}
+.hero-eyebrow::before {
+  content: '';  width: 40px; height: 1px; background: var(--red);
+  box-shadow: 0 0 8px var(--red);
+}
+.hero-h1 {
+  font-family: var(--display);
+  font-size: clamp(5rem, 15vw, 18rem);
+  line-height: .86;
+  letter-spacing: .02em;
+  opacity: 0; animation: fadeUp .9s ease .5s forwards;
+}
+.hero-h1 em {
+  font-style: normal; display: block;
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(240,236,227,.4);
+}
+.hero-h1 .hl { color: var(--red); display: inline; }
+.hero-sub {
+  margin-top: 2rem; max-width: 60ch;
+  font-size: .85rem; line-height: 1.9;
+  color: rgba(240,236,227,.42);
+  opacity: 0; animation: fadeUp .7s ease .8s forwards;
+}
+.hero-cta {
+  margin-top: 3rem; display: flex; align-items: center; gap: 2rem;
+  opacity: 0; animation: fadeUp .7s ease 1s forwards;
+}
+.btn-primary {
+  display: inline-flex; align-items: center; gap: .7rem;
+  background: var(--red); color: #fff;
+  font-family: var(--mono); font-size: .7rem; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase;
+  padding: .85rem 2rem; border-radius: 2px;
+  transition: background .2s, box-shadow .2s;
+  box-shadow: 0 0 0 rgba(255,59,31,0);
+}
+.btn-primary:hover {
+  background: #ff5530;
+  box-shadow: 0 0 30px rgba(255,59,31,.4);
+}
+.hero-scroll {
+  font-size: .58rem; letter-spacing: .18em; text-transform: uppercase;
+  color: rgba(240,236,227,.2);
+  display: flex; align-items: center; gap: .8rem;
+}
+.hero-scroll::after {
+  content: ''; width: 1px; height: 60px; background: var(--dim);
+  animation: scrollPulse 2s ease-in-out infinite;
+}
+
+/* ── SCANLINES ON HERO ── */
+#hero::after {
+  content: '';
+  position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(0,0,0,.07) 3px,
+    rgba(0,0,0,.07) 4px
+  );
+}
+
+/* BIG BACKGROUND NUMBER */
+.hero-bg-num {
+  position: absolute; right: -2rem; bottom: -4rem;
+  font-family: var(--display);
+  font-size: clamp(14rem, 35vw, 42rem);
+  line-height: 1;
+  color: transparent; -webkit-text-stroke: 1px rgba(240,236,227,.03);
+  pointer-events: none; user-select: none;
+  animation: fadeIn 1.5s ease 1.2s both;
+}
+
+/* ── SECTION GENERAL ── */
+.section {
+  padding: 8rem 3rem;
+  position: relative;
+  border-top: 1px solid var(--dim);
+}
+.section-num {
+  font-family: var(--display); font-size: .9rem; letter-spacing: .2em;
+  color: var(--red); margin-bottom: 1rem;
+  display: flex; align-items: center; gap: .8rem;
+}
+.section-num::before { content: ''; width: 30px; height: 1px; background: var(--red); box-shadow: 0 0 6px var(--red); }
+.section-title {
+  font-family: var(--display);
+  font-size: clamp(3.5rem, 7vw, 9rem);
+  line-height: .9; letter-spacing: .03em;
+  margin-bottom: 1.5rem;
+}
+.section-title .dim { color: transparent; -webkit-text-stroke: 1px rgba(240,236,227,.18); }
+.section-body {
+  max-width: 64ch;
+  font-size: .88rem; line-height: 2; color: rgba(240,236,227,.5);
+}
+.section-body p + p { margin-top: 1.2rem; }
+.section-body strong { color: var(--ink); font-weight: 700; }
+
+/* ── REVEAL ── */
+.rv { opacity: 0; transform: translateY(28px); transition: opacity .9s ease, transform .9s ease; }
+.rv.vi { opacity: 1; transform: none; }
+.d1 { transition-delay: .1s; } .d2 { transition-delay: .2s; } .d3 { transition-delay: .3s; } .d4 { transition-delay: .4s; }
+
+/* ── STEP 1: 哲學 ── */
+#step1 { display: grid; grid-template-columns: 1fr 1fr; gap: 6rem; align-items: start; }
+.philosophy-cards { display: flex; flex-direction: column; gap: 1.2rem; }
+.ph-card {
+  border: 1px solid var(--dim);
+  padding: 1.6rem 2rem;
+  border-radius: 4px;
+  position: relative; overflow: hidden;
+  transition: border-color .3s;
+}
+.ph-card:hover { border-color: rgba(255,59,31,.3); }
+.ph-card::before {
+  content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%;
+  background: var(--dim);
+  transition: background .3s;
+}
+.ph-card:hover::before { background: var(--red); box-shadow: 0 0 10px var(--red); }
+.ph-num {
+  font-family: var(--display); font-size: 3.5rem; line-height: 1;
+  color: transparent; -webkit-text-stroke: 1px rgba(255,59,31,.25);
+  margin-bottom: .4rem;
+}
+.ph-title { font-size: .7rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--ink); margin-bottom: .6rem; }
+.ph-body { font-size: .78rem; line-height: 1.85; color: rgba(240,236,227,.42); }
+
+/* ── STEP 2: ARCHITECTURE ── */
+#step2 .arch-diagram { margin-top: 4rem; }
+.arch-row {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 0 3rem;
+  margin-bottom: 0;
+}
+.arch-row + .arch-row { border-top: none; }
+.arch-label {
+  font-size: .58rem; letter-spacing: .16em; text-transform: uppercase;
+  color: rgba(240,236,227,.25); padding: 1.8rem 0; text-align: right;
+  border-right: 1px solid var(--dim); padding-right: 2rem;
+}
+.arch-tier {
+  display: flex; align-items: center; gap: 1rem;
+  padding: 1.4rem 0 1.4rem 2rem;
+  border-bottom: 1px solid var(--dim);
+}
+.arch-box {
+  border: 1px solid var(--dim2);
+  padding: .7rem 1.2rem;
+  border-radius: 3px;
+  font-size: .7rem; letter-spacing: .04em;
+  white-space: nowrap;
+  background: rgba(240,236,227,.025);
+  transition: all .3s;
+}
+.arch-box:hover { border-color: var(--red); color: var(--red); background: rgba(255,59,31,.04); }
+.arch-box.hl { border-color: rgba(255,174,26,.4); color: var(--amber); background: rgba(255,174,26,.04); }
+.arch-arrow {
+  font-size: .75rem; color: rgba(240,236,227,.2);
+}
+.arch-note {
+  font-size: .62rem; color: rgba(240,236,227,.2); padding-left: .5rem;
+  white-space: nowrap;
+}
+
+/* ── STEP 3: SHEETS ── */
+#step3 .sheets-grid {
+  margin-top: 3.5rem;
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 1px; border: 1px solid var(--dim);
+  border-radius: 4px; overflow: hidden;
+}
+.sheet-card {
+  padding: 2rem 1.8rem;
+  background: rgba(240,236,227,.02);
+  border-right: 1px solid var(--dim); border-bottom: 1px solid var(--dim);
+  transition: background .3s;
+  cursor: default;
+}
+.sheet-card:hover { background: rgba(240,236,227,.04); }
+.sheet-card:nth-child(3n) { border-right: none; }
+.sheet-card:nth-last-child(-n+3) { border-bottom: none; }
+.sc-icon { font-size: 1.8rem; margin-bottom: 1rem; }
+.sc-name {
+  font-family: var(--mono); font-size: .68rem; font-weight: 700;
+  letter-spacing: .1em; color: var(--ink); margin-bottom: .5rem;
+}
+.sc-cols {
+  font-size: .6rem; line-height: 1.9;
+  color: rgba(240,236,227,.28);
+}
+.sc-badge {
+  display: inline-block; margin-top: .7rem;
+  font-size: .55rem; letter-spacing: .12em; text-transform: uppercase;
+  padding: .2rem .5rem; border-radius: 2px;
+}
+.sc-badge.kv { background: rgba(255,174,26,.1); color: var(--amber); }
+.sc-badge.list { background: rgba(255,59,31,.1); color: var(--red); }
+
+/* ── STEP 4: CODE ── */
+#step4 .code-window {
+  margin-top: 3.5rem;
+  border: 1px solid var(--dim);
+  border-radius: 6px; overflow: hidden;
+}
+.code-titlebar {
+  display: flex; align-items: center; gap: .8rem;
+  padding: .8rem 1.2rem; background: rgba(240,236,227,.04);
+  border-bottom: 1px solid var(--dim);
+}
+.dot { width: 10px; height: 10px; border-radius: 50%; }
+.dot.r { background: #ff5f57; }
+.dot.y { background: #febc2e; }
+.dot.g { background: #28c840; }
+.code-filename {
+  margin-left: auto; font-size: .62rem; letter-spacing: .1em;
+  color: rgba(240,236,227,.25);
+}
+.code-body {
+  padding: 1.8rem 2rem;
+  font-size: .78rem; line-height: 1.9;
+  overflow-x: auto;
+  background: rgba(0,0,0,.4);
+}
+.code-body pre { white-space: pre; font-family: var(--mono); }
+.ck { color: #ff79c6; } /* keyword */
+.cf { color: #50fa7b; } /* function */
+.cs { color: var(--amber); } /* string */
+.co { color: rgba(240,236,227,.28); font-style: italic; } /* comment */
+.cn { color: #bd93f9; } /* number/name */
+.cp { color: #8be9fd; } /* param */
+
+/* ── STEP 5: FLOW ── */
+#step5 .flow-timeline {
+  margin-top: 4rem;
+  position: relative;
+  padding-left: 3rem;
+}
+.flow-timeline::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0; width: 1px;
+  background: var(--dim);
+}
+.flow-item {
+  position: relative; margin-bottom: 3rem;
+}
+.flow-item::before {
+  content: '';
+  position: absolute; left: -3rem; top: .3rem;
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--bg); border: 2px solid var(--dim);
+  transition: border-color .3s, box-shadow .3s;
+}
+.flow-item:hover::before {
+  border-color: var(--red);
+  box-shadow: 0 0 10px var(--red);
+}
+.flow-step {
+  font-size: .58rem; letter-spacing: .18em; text-transform: uppercase;
+  color: var(--red); margin-bottom: .4rem;
+}
+.flow-title {
+  font-family: var(--serif); font-size: 1.15rem; font-weight: 700;
+  color: var(--ink); margin-bottom: .5rem; line-height: 1.3;
+}
+.flow-body {
+  font-size: .78rem; line-height: 1.9; color: rgba(240,236,227,.38); max-width: 54ch;
+}
+.flow-tag {
+  display: inline-flex; margin-top: .7rem;
+  gap: .4rem; flex-wrap: wrap;
+}
+.tag {
+  font-size: .58rem; letter-spacing: .1em; padding: .22rem .6rem;
+  border: 1px solid var(--dim); border-radius: 2px;
+  color: rgba(240,236,227,.28);
+}
+
+/* ── MARQUEE ── */
+.marquee-wrap {
+  border-top: 1px solid var(--dim); border-bottom: 1px solid var(--dim);
+  padding: 1.2rem 0; overflow: hidden;
+  display: flex; gap: 0;
+}
+.marquee {
+  display: flex; gap: 3rem; white-space: nowrap;
+  animation: marquee 18s linear infinite;
+  font-family: var(--display); font-size: 1rem; letter-spacing: .2em;
+  color: rgba(240,236,227,.1);
+}
+.marquee span { color: var(--red); }
+
+/* ── STATS STRIP ── */
+.stats-strip {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 0; border-top: 1px solid var(--dim); border-bottom: 1px solid var(--dim);
+}
+.stat-item {
+  padding: 3rem 2.5rem;
+  border-right: 1px solid var(--dim);
+  text-align: center;
+}
+.stat-item:last-child { border-right: none; }
+.stat-num {
+  font-family: var(--display); font-size: 4.5rem;
+  line-height: 1; letter-spacing: .02em;
+}
+.stat-num .red { color: var(--red); }
+.stat-label {
+  font-size: .62rem; letter-spacing: .16em; text-transform: uppercase;
+  color: rgba(240,236,227,.3); margin-top: .6rem;
+}
+
+/* ── FINAL CTA ── */
+#final {
+  padding: 10rem 3rem;
+  text-align: center; display: flex; flex-direction: column; align-items: center;
+}
+.final-title {
+  font-family: var(--display);
+  font-size: clamp(5rem, 12vw, 16rem);
+  line-height: .88; letter-spacing: .04em;
+}
+.final-title .outline {
+  color: transparent; -webkit-text-stroke: 1px rgba(240,236,227,.2);
+}
+.final-title .solid { color: var(--ink); }
+.final-sub {
+  margin-top: 2rem; max-width: 50ch;
+  font-size: .85rem; line-height: 1.9; color: rgba(240,236,227,.35);
+}
+.final-btns {
+  margin-top: 3rem; display: flex; gap: 1.5rem; flex-wrap: wrap; justify-content: center;
+}
+.btn-ghost {
+  display: inline-flex; align-items: center; gap: .7rem;
+  border: 1px solid var(--dim); color: rgba(240,236,227,.45);
+  font-family: var(--mono); font-size: .7rem; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase;
+  padding: .85rem 2rem; border-radius: 2px;
+  transition: border-color .2s, color .2s;
+}
+.btn-ghost:hover { border-color: rgba(240,236,227,.4); color: var(--ink); }
+
+/* ── FOOTER ── */
+footer {
+  padding: 2rem 3rem;
+  display: flex; justify-content: space-between; align-items: center;
+  border-top: 1px solid var(--dim);
+  font-size: .6rem; letter-spacing: .1em; text-transform: uppercase;
+  color: rgba(240,236,227,.2);
+}
+footer a { transition: color .2s; }
+footer a:hover { color: var(--ink); }
+
+/* ── KEYFRAMES ── */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes scrollPulse { 0%,100% { opacity: .2; } 50% { opacity: .6; } }
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+/* ── MOBILE ── */
+@media (max-width: 900px) {
+  nav { padding: 1.2rem 1.5rem; }
+  .n-steps { display: none; }
+  .section { padding: 5rem 1.5rem; }
+  #hero { padding: 8rem 1.5rem 3rem; }
+  #step1 { grid-template-columns: 1fr; gap: 3rem; }
+  #step3 .sheets-grid { grid-template-columns: 1fr 1fr; }
+  .stats-strip { grid-template-columns: 1fr 1fr; }
+  .stat-item:nth-child(2) { border-right: none; }
+  .arch-row { grid-template-columns: 70px 1fr; gap: 0 1.5rem; }
+  footer { flex-direction: column; gap: .8rem; }
+}
+@media (max-width: 560px) {
+  #step3 .sheets-grid { grid-template-columns: 1fr; }
+  .sheet-card { border-right: none !important; }
+  .stats-strip { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div id="prog"><div id="prog-fill"></div></div>
+
+<nav id="nav">
+  <div class="n-logo">REX<span>.</span>TEACH</div>
+  <ul class="n-steps">
+    <li><a href="#step1" class="nav-link" data-section="step1">01 哲學</a></li>
+    <li><a href="#step2" class="nav-link" data-section="step2">02 架構</a></li>
+    <li><a href="#step3" class="nav-link" data-section="step3">03 Sheets</a></li>
+    <li><a href="#step4" class="nav-link" data-section="step4">04 Script</a></li>
+    <li><a href="#step5" class="nav-link" data-section="step5">05 上線</a></li>
+  </ul>
+</nav>
+
+<!-- ── HERO ── -->
+<section id="hero">
+  <div class="hero-bg-num">GS</div>
+  <div class="hero-eyebrow">Rex Chang · 教學系列 · 2025</div>
+  <h1 class="hero-h1">
+    <span>FROM</span><br>
+    <em>GOOGLE</em><br>
+    <span>SHEETS<span class="hl">.</span></span>
+  </h1>
+  <p class="hero-sub">
+    不寫後端、不花一毛錢主機費——把 Google Sheets 當 CMS，用 Apps Script 做 API，讓個人作品集自動從試算表渲染。<strong style="color:var(--ink);">四個步驟，從概念到上線。</strong>
+  </p>
+  <div class="hero-cta">
+    <a href="#step1" class="btn-primary">開始學習 →</a>
+    <div class="hero-scroll">SCROLL DOWN</div>
+  </div>
+</section>
+
+<!-- ── MARQUEE ── -->
+<div class="marquee-wrap" aria-hidden="true">
+  <div class="marquee">
+    GOOGLE SHEETS &nbsp;<span>·</span>&nbsp; APPS SCRIPT &nbsp;<span>·</span>&nbsp; CLOUD RUN &nbsp;<span>·</span>&nbsp; ZERO BACKEND &nbsp;<span>·</span>&nbsp; FREE HOSTING &nbsp;<span>·</span>&nbsp; 免費 CMS &nbsp;<span>·</span>&nbsp; GOOGLE SHEETS &nbsp;<span>·</span>&nbsp; APPS SCRIPT &nbsp;<span>·</span>&nbsp; CLOUD RUN &nbsp;<span>·</span>&nbsp; ZERO BACKEND &nbsp;<span>·</span>&nbsp; FREE HOSTING &nbsp;<span>·</span>&nbsp; 免費 CMS &nbsp;<span>·</span>&nbsp;
+    GOOGLE SHEETS &nbsp;<span>·</span>&nbsp; APPS SCRIPT &nbsp;<span>·</span>&nbsp; CLOUD RUN &nbsp;<span>·</span>&nbsp; ZERO BACKEND &nbsp;<span>·</span>&nbsp; FREE HOSTING &nbsp;<span>·</span>&nbsp; 免費 CMS &nbsp;<span>·</span>&nbsp; GOOGLE SHEETS &nbsp;<span>·</span>&nbsp; APPS SCRIPT &nbsp;<span>·</span>&nbsp; CLOUD RUN &nbsp;<span>·</span>&nbsp; ZERO BACKEND &nbsp;<span>·</span>&nbsp; FREE HOSTING &nbsp;<span>·</span>&nbsp; 免費 CMS &nbsp;<span>·</span>&nbsp;
+  </div>
+</div>
+
+<!-- ── STATS ── -->
+<div class="stats-strip">
+  <div class="stat-item rv">
+    <div class="stat-num"><span class="red" data-count="0">0</span></div>
+    <div class="stat-label">元後端費用 / 月</div>
+  </div>
+  <div class="stat-item rv d1">
+    <div class="stat-num"><span data-count="6">0</span></div>
+    <div class="stat-label">Google Sheets 分頁</div>
+  </div>
+  <div class="stat-item rv d2">
+    <div class="stat-num"><span data-count="4">0</span></div>
+    <div class="stat-label">部署步驟</div>
+  </div>
+  <div class="stat-item rv d3">
+    <div class="stat-num"><span data-count="100">0</span><span class="red">%</span></div>
+    <div class="stat-label">Serverless 架構</div>
+  </div>
+</div>
+
+<!-- ── STEP 1: 哲學 ── -->
+<section class="section" id="step1">
+  <div class="section-num rv">01 / 05</div>
+  <h2 class="section-title rv d1">設計<br><span class="dim">哲學</span></h2>
+  <div id="step1" style="margin-top: 4rem; display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: start;">
+    <div class="section-body rv d2">
+      <p>大多數工程師的作品集有個矛盾：<strong>你有能力打造複雜系統，卻把自己的網站弄得比維護客戶案子還麻煩。</strong></p>
+      <p>重點不是技術有多複雜，而是<strong>資料與設計是否真正分離</strong>——改一行文案，不該重新部署整個前端。</p>
+      <p>這套架構的核心哲學：<strong>把 Google Sheets 當資料庫，Apps Script 當 REST API，靜態 HTML 當渲染引擎。</strong>三層各司其職，互不耦合。</p>
+    </div>
+    <div class="philosophy-cards rv d3">
+      <div class="ph-card">
+        <div class="ph-num">01</div>
+        <div class="ph-title">資料與設計分離</div>
+        <div class="ph-body">設計師改試算表，工程師改 HTML，兩者互不影響。唯一的依賴是 API 格式的穩定。</div>
+      </div>
+      <div class="ph-card">
+        <div class="ph-num">02</div>
+        <div class="ph-title">三層 Fallback 容錯</div>
+        <div class="ph-body">GAS 掛掉 → 讀本地 JSON；JSON 不存在 → 用內嵌 FALLBACK。網站永遠不崩潰。</div>
+      </div>
+      <div class="ph-card">
+        <div class="ph-num">03</div>
+        <div class="ph-title">免費但有韌性</div>
+        <div class="ph-body">GCS 靜態託管 + Apps Script 免費方案足夠個人作品集。成本趨近零，SLA 趨近 Google 等級。</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── STEP 2: 架構 ── -->
+<section class="section" id="step2">
+  <div class="section-num rv">02 / 05</div>
+  <h2 class="section-title rv d1">三層<br><span class="dim">架構</span></h2>
+  <div class="section-body rv d2">
+    <p>從使用者打開瀏覽器到看見作品集，資料流經三個完全獨立的層。每層都可以單獨替換，不影響其他兩層。</p>
+  </div>
+  <div class="arch-diagram rv d3">
+    <div class="arch-row">
+      <div class="arch-label">LAYER 1<br>儲存層</div>
+      <div class="arch-tier">
+        <div class="arch-box hl">📊 Google Sheets</div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-note">6 個分頁，純文字編輯</div>
+      </div>
+    </div>
+    <div class="arch-row">
+      <div class="arch-label">LAYER 2<br>API 層</div>
+      <div class="arch-tier">
+        <div class="arch-box">⚡ Apps Script</div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box">doGet(e)</div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-note">?table=rex-chang-notes → JSON</div>
+      </div>
+    </div>
+    <div class="arch-row">
+      <div class="arch-label">LAYER 3<br>渲染層</div>
+      <div class="arch-tier">
+        <div class="arch-box">🌐 HTML SPA</div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box">renderSite(C)</div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-note">DOM 動態渲染</div>
+      </div>
+    </div>
+    <div class="arch-row">
+      <div class="arch-label">HOSTING<br>靜態託管</div>
+      <div class="arch-tier">
+        <div class="arch-box">GCS Bucket</div>
+        <div class="arch-arrow">or</div>
+        <div class="arch-box">GitHub Pages</div>
+        <div class="arch-arrow">or</div>
+        <div class="arch-box">Cloudflare</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── STEP 3: SHEETS ── -->
+<section class="section" id="step3">
+  <div class="section-num rv">03 / 05</div>
+  <h2 class="section-title rv d1">Google<br><span class="dim">Sheets</span></h2>
+  <div class="section-body rv d2">
+    <p>整個 CMS 是一個 Google Spreadsheet，六個分頁各自負責一個資料域。命名慣例：<strong>rex-chang-{domain}</strong>。</p>
+  </div>
+  <div class="sheets-grid rv d3">
+    <div class="sheet-card">
+      <div class="sc-icon">⚙️</div>
+      <div class="sc-name">rex-chang-meta</div>
+      <div class="sc-cols">key · value<br>siteTitle<br>description<br>version</div>
+      <span class="sc-badge kv">key/value</span>
+    </div>
+    <div class="sheet-card">
+      <div class="sc-icon">👤</div>
+      <div class="sc-name">rex-chang-personal</div>
+      <div class="sc-cols">key · value<br>firstName · lastName<br>email · github<br>slogan · location</div>
+      <span class="sc-badge kv">key/value</span>
+    </div>
+    <div class="sheet-card">
+      <div class="sc-icon">💻</div>
+      <div class="sc-name">rex-chang-techstack</div>
+      <div class="sc-cols">category · icon<br>name · yearsExp<br>13 rows</div>
+      <span class="sc-badge list">list</span>
+    </div>
+    <div class="sheet-card">
+      <div class="sc-icon">🗂️</div>
+      <div class="sc-name">rex-chang-projects</div>
+      <div class="sc-cols">id · num · year<br>title · description<br>tech · link · featured</div>
+      <span class="sc-badge list">list</span>
+    </div>
+    <div class="sheet-card">
+      <div class="sc-icon">📷</div>
+      <div class="sc-name">rex-chang-albums</div>
+      <div class="sc-cols">camera · lens · iso<br>aperture · shutterSpeed<br>focalLength · location</div>
+      <span class="sc-badge list">list</span>
+    </div>
+    <div class="sheet-card">
+      <div class="sc-icon">📝</div>
+      <div class="sc-name">rex-chang-notes</div>
+      <div class="sc-cols">slug · category<br>title · excerpt<br>date · readingTimeMin</div>
+      <span class="sc-badge list">list</span>
+    </div>
+  </div>
+</section>
+
+<!-- ── STEP 4: CODE ── -->
+<section class="section" id="step4">
+  <div class="section-num rv">04 / 05</div>
+  <h2 class="section-title rv d1">Apps<br><span class="dim">Script</span></h2>
+  <div class="section-body rv d2">
+    <p>只需要一個 <strong>doGet(e)</strong> 函式。接收 <code style="color:var(--amber)">?table=</code> 查詢參數，從對應分頁讀出所有列，轉成 JSON 回傳。整個 API 大約 30 行。</p>
+  </div>
+  <div class="code-window rv d3">
+    <div class="code-titlebar">
+      <div class="dot r"></div><div class="dot y"></div><div class="dot g"></div>
+      <span class="code-filename">Code.gs — Apps Script</span>
+    </div>
+    <div class="code-body">
+<pre><span class="co">// 部署為 Web App → 任何人可存取</span>
+<span class="ck">function</span> <span class="cf">doGet</span>(<span class="cp">e</span>) {
+  <span class="ck">const</span> <span class="cn">table</span> = <span class="cp">e</span>.parameter.table;
+  <span class="ck">const</span> <span class="cn">ss</span>    = SpreadsheetApp.<span class="cf">getActiveSpreadsheet</span>();
+  <span class="ck">const</span> <span class="cn">sheet</span> = <span class="cn">ss</span>.<span class="cf">getSheetByName</span>(<span class="cn">table</span>);
+
+  <span class="ck">if</span> (!<span class="cn">sheet</span>) {
+    <span class="ck">return</span> <span class="cf">jsonOut</span>({ error: <span class="cs">`Sheet "${table}" not found`</span> });
+  }
+
+  <span class="ck">const</span> [headers, ...rows] = <span class="cn">sheet</span>.<span class="cf">getDataRange</span>().<span class="cf">getValues</span>();
+  <span class="ck">const</span> <span class="cn">data</span> = <span class="cn">rows</span>
+    .<span class="cf">filter</span>(<span class="cp">row</span> => <span class="cp">row</span>.<span class="cf">some</span>(<span class="cp">c</span> => <span class="cp">c</span> !== <span class="cs">""</span>))  <span class="co">// 過濾空列</span>
+    .<span class="cf">map</span>(<span class="cp">row</span> => {
+      <span class="ck">const</span> <span class="cn">obj</span> = {};
+      <span class="cn">headers</span>.<span class="cf">forEach</span>((<span class="cp">h</span>, <span class="cp">i</span>) => <span class="cn">obj</span>[<span class="cp">h</span>] = <span class="cp">row</span>[<span class="cp">i</span>]);
+      <span class="ck">return</span> <span class="cn">obj</span>;
+    });
+
+  <span class="ck">return</span> <span class="cf">jsonOut</span>(<span class="cn">data</span>);
+}
+
+<span class="ck">function</span> <span class="cf">jsonOut</span>(<span class="cp">data</span>) {
+  <span class="ck">return</span> ContentService
+    .<span class="cf">createTextOutput</span>(JSON.<span class="cf">stringify</span>(<span class="cp">data</span>))
+    .<span class="cf">setMimeType</span>(ContentService.MimeType.JSON);
+}</pre>
+    </div>
+  </div>
+  <div style="margin-top: 2.5rem; display: grid; grid-template-columns: repeat(5, 1fr); gap: 1px; rv d4" class="rv d4">
+    <div style="padding: 1.5rem; border: 1px solid var(--dim); border-radius: 3px; text-align: center;">
+      <div style="font-family: var(--display); font-size: 2rem; color: var(--red);">①</div>
+      <div style="font-size: .62rem; color: rgba(240,236,227,.3); margin-top: .4rem; line-height: 1.7;">建立 Apps Script 專案</div>
+    </div>
+    <div style="padding: 1.5rem; border: 1px solid var(--dim); border-radius: 3px; text-align: center;">
+      <div style="font-family: var(--display); font-size: 2rem; color: var(--red);">②</div>
+      <div style="font-size: .62rem; color: rgba(240,236,227,.3); margin-top: .4rem; line-height: 1.7;">貼上 doGet 程式碼</div>
+    </div>
+    <div style="padding: 1.5rem; border: 1px solid var(--dim); border-radius: 3px; text-align: center;">
+      <div style="font-family: var(--display); font-size: 2rem; color: var(--red);">③</div>
+      <div style="font-size: .62rem; color: rgba(240,236,227,.3); margin-top: .4rem; line-height: 1.7;">Deploy → Web App</div>
+    </div>
+    <div style="padding: 1.5rem; border: 1px solid var(--dim); border-radius: 3px; text-align: center;">
+      <div style="font-family: var(--display); font-size: 2rem; color: var(--red);">④</div>
+      <div style="font-size: .62rem; color: rgba(240,236,227,.3); margin-top: .4rem; line-height: 1.7;">設定「任何人可存取」</div>
+    </div>
+    <div style="padding: 1.5rem; border: 1px solid var(--dim); border-radius: 3px; text-align: center;">
+      <div style="font-family: var(--display); font-size: 2rem; color: var(--red);">⑤</div>
+      <div style="font-size: .62rem; color: rgba(240,236,227,.3); margin-top: .4rem; line-height: 1.7;">複製網址貼到 HTML</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── STEP 5: 上線 ── -->
+<section class="section" id="step5">
+  <div class="section-num rv">05 / 05</div>
+  <h2 class="section-title rv d1">日常<br><span class="dim">更新</span></h2>
+  <div class="section-body rv d2">
+    <p>上線後，日常維護不需要碰任何程式碼。所有內容更新都在 Google Sheets 完成，網站自動反映最新資料。</p>
+  </div>
+  <div class="flow-timeline rv d3">
+    <div class="flow-item">
+      <div class="flow-step">STEP 1</div>
+      <div class="flow-title">打開 Google Sheets</div>
+      <div class="flow-body">找到對應的分頁——新增一列 note、修改 project 描述、更新相片 EXIF 資訊。就像操作 Excel 一樣。</div>
+      <div class="flow-tag">
+        <span class="tag">rex-chang-notes</span>
+        <span class="tag">rex-chang-projects</span>
+        <span class="tag">rex-chang-albums</span>
+      </div>
+    </div>
+    <div class="flow-item">
+      <div class="flow-step">STEP 2</div>
+      <div class="flow-title">儲存 — 完成</div>
+      <div class="flow-body">不需要重新部署。下一個訪客打開網站時，Apps Script 會即時從 Sheets 讀取最新資料，前端動態渲染。</div>
+      <div class="flow-tag">
+        <span class="tag">即時生效</span>
+        <span class="tag">零部署</span>
+        <span class="tag">零 downtime</span>
+      </div>
+    </div>
+    <div class="flow-item">
+      <div class="flow-step">FALLBACK 機制</div>
+      <div class="flow-title">三層容錯，永不崩潰</div>
+      <div class="flow-body">GAS 回應失敗 → 改讀 <code style="color:var(--amber)">rex-chang-content.json</code>；JSON 不存在 → 讀 HTML 內嵌的 <code style="color:var(--amber)">FALLBACK</code> 物件。無論如何，網站都能正常顯示完整內容。</div>
+      <div class="flow-tag">
+        <span class="tag">GAS</span>
+        <span class="tag">→ local JSON</span>
+        <span class="tag">→ FALLBACK const</span>
+      </div>
+    </div>
+    <div class="flow-item">
+      <div class="flow-step">HOSTING</div>
+      <div class="flow-title">靜態檔案任意部署</div>
+      <div class="flow-body">整個網站是一個 HTML 檔案。上傳到 GCS Bucket 並開啟 public access，或丟上 GitHub Pages、Cloudflare Pages——三種方式都免費，全球 CDN。</div>
+      <div class="flow-tag">
+        <span class="tag">GCS</span>
+        <span class="tag">GitHub Pages</span>
+        <span class="tag">Cloudflare Pages</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FINAL ── -->
+<section id="final">
+  <h2 class="final-title rv">
+    <span class="outline">BUILD</span><br>
+    <span class="solid">SHIP.</span>
+  </h2>
+  <p class="final-sub rv d1">
+    一個 Google Spreadsheet，一個 Apps Script，一個 HTML 檔案。<br>
+    個人作品集不需要比這複雜。
+  </p>
+  <div class="final-btns rv d2">
+    <a href="rex-chang-portfolio.html" class="btn-primary" target="_blank">查看範例作品集 ↗</a>
+    <a href="#hero" class="btn-ghost">回到頂部 ↑</a>
+  </div>
+</section>
+
+<footer>
+  <span>Rex Chang · 2025</span>
+  <span>從 Google Sheets 到個人網站教學</span>
+  <a href="rex-chang-portfolio.html">rex-chang-portfolio.html</a>
+</footer>
+
+<script>
+/* ── PROGRESS BAR ── */
+window.addEventListener('scroll', () => {
+  const el = document.documentElement;
+  const pct = el.scrollTop / (el.scrollHeight - el.clientHeight) * 100;
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('nav').classList.toggle('on', scrollY > 60);
+});
+
+/* ── REVEAL ON SCROLL ── */
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('vi'); io.unobserve(e.target); } });
+}, { threshold: 0.08 });
+document.querySelectorAll('.rv').forEach(el => io.observe(el));
+
+/* ── COUNT UP ANIMATION ── */
+const counters = document.querySelectorAll('[data-count]');
+const countIO = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    const el = e.target;
+    const target = parseInt(el.dataset.count);
+    const dur = 1200;
+    const start = performance.now();
+    function step(now) {
+      const p = Math.min((now - start) / dur, 1);
+      const ease = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(ease * target);
+      if (p < 1) requestAnimationFrame(step);
+      else el.textContent = target;
+    }
+    requestAnimationFrame(step);
+    countIO.unobserve(el);
+  });
+}, { threshold: 0.5 });
+counters.forEach(el => countIO.observe(el));
+
+/* ── ACTIVE NAV LINKS ── */
+const sections = ['step1','step2','step3','step4','step5'];
+const navLinks = document.querySelectorAll('.nav-link');
+const sectionIO = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      const id = e.target.id;
+      navLinks.forEach(l => l.classList.toggle('active', l.dataset.section === id));
+    }
+  });
+}, { threshold: 0.4 });
+sections.forEach(id => { const el = document.getElementById(id); if (el) sectionIO.observe(el); });
+
+/* ── CURSOR GLOW ON INTERACTIVE ── */
+document.querySelectorAll('a, button, .ph-card, .sheet-card, .arch-box').forEach(el => {
+  el.style.cursor = 'pointer';
+});
+</script>
+</body>
+</html>
